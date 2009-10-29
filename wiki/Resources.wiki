@@ -1,0 +1,16 @@
+#summary One-sentence summary of this page.
+
+= Introduction =
+
+Useful stuff
+
+= Details =
+
+*Verilog*
+
+Detailed File I/O introduction: [http://larc.ee.nthu.edu.tw/~lmdenq/doc/fileio.htm]
+
+Add your content here.  Format your content with:
+  * Text in *bold* or _italic_
+  * Headings, paragraphs, and lists
+  * Automatic links to other wiki pages
