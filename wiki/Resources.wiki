@@ -1,8 +1,8 @@
-#summary One-sentence summary of this page.
+#summary Let's fill this page with something good.
 
 == Introduction ==
 
-Let's fill this page with some useful stuff
+This pages contains useful resources.
 
 
 == Contents ==
