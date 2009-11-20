@@ -6,16 +6,16 @@
 //L1L2Protool Test
 //
 //Test if read/write protocol between L1 and L2 cache works.
-//
+//  
 //
 
 module L1CacheTest(addr_out, we, stb, data_inout);
-  wire dir;
+  //wire dir;
   output addr_out, we;
   input stb;
   inout [63:0] data_inout;
-  assign data_inout=(dir)?64'bz:write_data;
-  assign dir = data_dir;
+  assign data_inout=(data_dir)?64'bz:write_data;
+  //assign dir = data_dir;
   
   integer MCD, MCDW, fin_status, cmd, addr; 
   reg [31:0] address, address2;
@@ -24,9 +24,8 @@ module L1CacheTest(addr_out, we, stb, data_inout);
   reg [31:0] addr_out;
   reg [63:0] data, write_data;
   
-  
   initial
-  begin
+  begin 
      we = 1;
      
      MCD = $fopen("FileIOTest.txt", "r");
