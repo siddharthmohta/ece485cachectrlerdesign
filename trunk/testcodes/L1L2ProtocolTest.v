@@ -3,7 +3,7 @@
 //Cache Controller Design Project
 //Jinho Park
 //
-//L1L2Protool Test
+//L1L2MemProtool Test
 //
 //Test if read/write protocol between L1 and L2 cache works.
 //  
@@ -120,3 +120,46 @@ module L2CacheTest(addr_out, data_out, ack_out, we, stb, addr_in, data_inout);
   end
   
 endmodule
+
+
+module Main_Memory(data_out, addr_in, RAS, CAS, CS, WE, clk, data_inout, stb_inout);
+  output data_out;
+  input RAS, CAS, CS, WE;
+  inout [63:0] data_inout;
+  inout stb_inout;
+  
+  assign data_inout=(data_dir)?64'bz:write_data;
+  assign stb_inout=(stb_dir)?1'bz:write_stb;
+  
+  reg [63:0] data_out;
+  reg [63:0] data_in; 
+
+  reg [63:0] data, write_data;  
+  reg write_stb;
+
+  always @(addr_in or we)
+  begin 
+
+    if(we == 0)
+    begin
+      data_dir = 1;
+      $display("L1 Write");
+      data = data_inout;
+      $display ("%h", data);
+      stb = 0;
+      #1 stb = 1;
+    end
+    else if(we == 1)
+    begin
+      data_dir = 0;
+      $display("L1 Read");
+      write_data = addr_in;
+      $display ("L2 write data: %h", write_data);
+      stb = 0;
+      #1 stb = 1;
+    end
+
+  end
+  
+endmodule
+
