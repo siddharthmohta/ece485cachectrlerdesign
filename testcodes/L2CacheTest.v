@@ -2,16 +2,21 @@
   ECE 485
   Cache Controller Design Project
   
+  Tachchai Buraparatana
   Jinho Park
   Antonio Romano
   Hoa Quach
-  Tachchai
   
-  Module L2CacheTest
+           
+  Module 
+  
+    L2CacheTest  
   
   Port List
   
   Purpose
+  
+    Test module for L2 cache
 */
 
 module L2CacheTest(stb, we_L1, addr_L1, stall, we_MEM, addr_MEM, data_L1, data_MEM,);

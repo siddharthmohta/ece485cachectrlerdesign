@@ -70,8 +70,7 @@ module MainMemory (we, addr, data, stb);
   parameter ADDR_WIDTH = 32;
   parameter DATA_WIDTH = 64;
   parameter HIGH_Z = 64'bz; //High impedance value for birdirectional bus
-  
-  parameter READ = 1;
+
   parameter BURST_WIDTH = 64;
   parameter BURST_INCREMENT = 64'd64;
   parameter BUST_LENGTH = 8;
@@ -94,52 +93,64 @@ module MainMemory (we, addr, data, stb);
   
   reg [DATA_WIDTH-1:0] write_data;  //Driver for data output.
 
-  integer counter = BUST_LENGTH;    //Burst counter.
+  integer burst_counter = BUST_LENGTH;    //Burst burst_counter.
   
  // DEBU 
  // always @ (write_data)
  //  $display ( "data = %d", write_data);  
-  
 
+
+  // Initialize regs and variables
+  initial
+  begin
+    write_data = 0;
+    stb = 0;
+  end
+  
+  // Process request when we or addr changes
   always @ (we or addr)
   begin
   
-    counter = BUST_LENGTH;
-    stb = 0;
-    write_data = {32'h0,addr};
-  
+    // Construct output data by expanding zeros in upper 32 bits to addr
+    //write_data = {32'h0,addr};
+    
+    // Output data if we is asserted.
     if(we)
     begin
-    
-      //#0.5 stb = ~stb;
-
-      while (counter > 0)
-       begin        
-         #0.5 write_data = write_data + BURST_INCREMENT; 
-         //#0.5 write_data = write_data + 1; 
-         #0.5 stb = ~stb;
-          counter = counter - 1;
+      
+      // Burst out data 
+      while (burst_counter > 0)
+       begin
+         // Counstruct output data by incrementing addr bits by 64
+         //so that the each chunk of data represents the starting address of 
+         //the 64 bit chunk. 
+         #1 write_data = addr + (8-burst_counter)*BURST_INCREMENT;
+         #1 stb = ~stb;                    // Toggle strobe when data is ready
+            burst_counter = burst_counter - 1;
        end
             
        /*
        
        #0.5 stb = ~stb;
        
-       while( counter > 0)
+       while( burst_counter > 0)
        begin        
          #0.5 write_data = write_data + BURST_INCREMENT; 
          //#0.5 write_data = write_data + 1; 
          #0.5 stb = ~stb;
-          counter = counter + 1;
+          burst_counter = burst_counter + 1;
        end
 
-       
-       counter = 0;
+      
+       burst_counter = 0;
        */
-      end
-   else
+       
+       burst_counter = BUST_LENGTH; //re-set burst_counter to the burst length.
+   end
+   // No operation when we is de-asserted
+   else if(!we)
      begin
-       #0.5 stb = ~stb;
+       //#0.5 stb = ~stb;
      end
   end
 

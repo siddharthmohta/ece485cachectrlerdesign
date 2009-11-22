@@ -100,9 +100,6 @@ module L1Cache (stall, addr, we, data);
   
   reg [DATA_WIDTH-1:0] write_data;  //Driver for data output.
   
-
-  
-
   
   // File I/O Variables
   integer fin = 0;       //File desscriptor used in in opening the trace
