@@ -73,7 +73,7 @@ module MainMemory (we, addr, data, stb);
 
   parameter BURST_WIDTH = 64;
   parameter BURST_INCREMENT = 64'd64;
-  parameter BUST_LENGTH = 8;
+  parameter BURST_LENGTH = 8;
 
   
   // I/O port declarations
@@ -81,6 +81,7 @@ module MainMemory (we, addr, data, stb);
   input addr;
   
   inout [DATA_WIDTH-1:0] data;
+  //conditional assignment to bidirectional data ports
   assign data = (~we) ? HIGH_Z : write_data;
   
   output stb;
@@ -93,7 +94,7 @@ module MainMemory (we, addr, data, stb);
   
   reg [DATA_WIDTH-1:0] write_data;  //Driver for data output.
 
-  integer burst_counter = BUST_LENGTH;    //Burst burst_counter.
+  integer burst_counter = BURST_LENGTH;    //Burst burst_counter.
   
  // DEBU 
  // always @ (write_data)
@@ -105,6 +106,7 @@ module MainMemory (we, addr, data, stb);
   begin
     write_data = 0;
     stb = 0;
+    burst_counter = BURST_LENGTH;
   end
   
   // Process request when we or addr changes
@@ -114,8 +116,8 @@ module MainMemory (we, addr, data, stb);
     // Construct output data by expanding zeros in upper 32 bits to addr
     //write_data = {32'h0,addr};
     
-    // Output data if we is asserted.
-    if(we)
+    if(we)                    //output data if we is asserted.
+
     begin
       
       // Burst out data 
@@ -145,12 +147,15 @@ module MainMemory (we, addr, data, stb);
        burst_counter = 0;
        */
        
-       burst_counter = BUST_LENGTH; //re-set burst_counter to the burst length.
+       burst_counter = BURST_LENGTH; //re-set burst_counter to the burst length.
+
    end
-   // No operation when we is de-asserted
-   else if(!we)
+
+   else if(!we)    // No operation when we is de-asserted
      begin
+
        //#0.5 stb = ~stb;
+
      end
   end
 

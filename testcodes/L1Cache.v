@@ -90,6 +90,7 @@ module L1Cache (stall, addr, we, data);
   output addr, we;
   
   inout [DATA_WIDTH-1:0] data;
+  //conditional assignment to bidirectional data ports
   assign data = (data_dir) ? HIGH_Z : write_data;
   
   // Net and variable declarations  
@@ -141,14 +142,13 @@ module L1Cache (stall, addr, we, data);
         
         //Decode the command value and make L2 cache request accordingly        
 
-        //if stall signal is asserted, wait until de-asserted.
-        if(stall == 1)
+        if(stall)        //if stall signal is asserted, wait until de-asserted    
           @ (negedge stall);
+   
+        else if(command == 0 || command == 2) //process data read and 
+        begin                                 //instruction fetch requests.
 
-        //process data read and instruction fetch requests.
-        else if(command == 0 || command == 2)
-        begin
-          data_dir = DATA_BUS_READ;     //set data bus to high impedence
+          data_dir = DATA_BUS_READ;     //set data ports to high impedence
           we = 1;                       //de-assert write enable 
           addr = address;               //output address
           
@@ -156,12 +156,13 @@ module L1Cache (stall, addr, we, data);
           @ (negedge stall)
             // Display the data read from L2
             $display("Data from L2: %h", data);
+            
         end
 
-        //process data write requests
-        else if (command == 1)
+        else if (command == 1)           //process data write requests
         begin
-          data_dir = DATA_BUS_WRITE;     //let write_data to drive the bus 
+        
+          data_dir = DATA_BUS_WRITE;     //let write_data regs to drive the bus 
           we = 0;                        //assert write enable
           
           //construct output value by concatinating
@@ -177,9 +178,10 @@ module L1Cache (stall, addr, we, data);
           @ (negedge stall)
             //$display("Data from L1: %h", write_data);
           we = 1;
+          
         end
 
-      // Read in the command and address from the trace file.
+      // Read in the command and address of next reference from the trace file.
       fin_status = $fscanf(fin, "%d %h", command, address);
       
       end
