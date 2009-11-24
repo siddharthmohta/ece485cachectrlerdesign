@@ -72,8 +72,8 @@ module MainMemory (we, addr, data, stb);
   parameter HIGH_Z = 64'bz; //High impedance value for birdirectional bus
 
   parameter BURST_WIDTH = 64;
-  parameter BURST_INCREMENT = 64'd64;
-  parameter BURST_LENGTH = 2;
+  parameter BURST_INCREMENT = 64;
+  parameter BURST_LENGTH = 8;
 
   
   // I/O port declarations
@@ -130,6 +130,7 @@ module MainMemory (we, addr, data, stb);
             write_data [63:32] = addr + (BURST_LENGTH-burst_counter)*BURST_INCREMENT+1;
          #1 stb = ~stb;                    // Toggle strobe when data is ready
             burst_counter = burst_counter - 1;
+            $display("write_data: %h", write_data);
        end
             
        burst_counter = BURST_LENGTH; //re-set burst_counter to the burst length.
