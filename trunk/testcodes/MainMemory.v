@@ -73,7 +73,7 @@ module MainMemory (we, addr, data, stb);
 
   parameter BURST_WIDTH = 64;
   parameter BURST_INCREMENT = 64'd64;
-  parameter BURST_LENGTH = 8;
+  parameter BURST_LENGTH = 2;
 
   
   // I/O port declarations
@@ -126,27 +126,12 @@ module MainMemory (we, addr, data, stb);
          // Counstruct output data by incrementing addr bits by 64
          //so that the each chunk of data represents the starting address of 
          //the 64 bit chunk. 
-         #1 write_data = addr + (8-burst_counter)*BURST_INCREMENT;
+         #1 write_data [31:0] = addr + (BURST_LENGTH-burst_counter)*BURST_INCREMENT;
+            write_data [63:32] = addr + (BURST_LENGTH-burst_counter)*BURST_INCREMENT+1;
          #1 stb = ~stb;                    // Toggle strobe when data is ready
             burst_counter = burst_counter - 1;
        end
             
-       /*
-       
-       #0.5 stb = ~stb;
-       
-       while( burst_counter > 0)
-       begin        
-         #0.5 write_data = write_data + BURST_INCREMENT; 
-         //#0.5 write_data = write_data + 1; 
-         #0.5 stb = ~stb;
-          burst_counter = burst_counter + 1;
-       end
-
-      
-       burst_counter = 0;
-       */
-       
        burst_counter = BURST_LENGTH; //re-set burst_counter to the burst length.
 
    end
