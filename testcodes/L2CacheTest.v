@@ -32,8 +32,13 @@ module L2CacheTest(stb, we_L1, addr_L1, stall, we_MEM, addr_MEM, data_L1, data_M
   parameter DATA_BUS_READ  = 1;
   parameter DATA_BUS_WRITE = 0;
   
-  parameter BUST_LENGTH = 8;
-
+  parameter BURST_LENGTH = 2;
+  
+  // Cache Parameter declerataion
+  parameter CACHE_WORD_WIDTH = 32;
+  parameter CACHE_WAY_SIZE = 2;
+  parameter CACHE_INDEX_SIZE = 2;
+  parameter CACHE_LINE_SIZE = 4;
 
   // I/O port declarations    
   input stb, we_L1, addr_L1;
@@ -59,8 +64,11 @@ module L2CacheTest(stb, we_L1, addr_L1, stall, we_MEM, addr_MEM, data_L1, data_M
   reg [DATA_WIDTH_L2-1:0] write_data_MEM;
   
   reg [DATA_WIDTH_L2-1:0] data;
+  
+  // Initialize cache
+  reg [CACHE_WORD_WIDTH-1:0] cache_data [CACHE_WAY_SIZE-1:0][CACHE_INDEX_SIZE-1:0][CACHE_LINE_SIZE-1:0];
 
-  integer burst_counter;                 //burst counter
+  integer burst_counter,line_counter,way_counter,word_counter;        //counter
 
   // Initialize variables
   //initial
@@ -89,18 +97,31 @@ module L2CacheTest(stb, we_L1, addr_L1, stall, we_MEM, addr_MEM, data_L1, data_M
       data_dir_L1 = DATA_BUS_WRITE; //let write_data_L1 reg to drive the bus
       $display("L1 Read");
       
-      write_data_L1 = addr_L1;      //assurming a cache miss
+      write_data_L1 = addr_L1;      //assuming a cache miss
 
       data_dir_MEM = 1;      
       we_MEM = 1;
       addr_MEM = addr_L1;
+      word_counter = 0;
       
-      repeat (BUST_LENGTH)
+      repeat (BURST_LENGTH)
         begin
+
           @ (posedge stb or negedge stb)
+          begin
+          
             data = data_MEM;
+            cache_data [0][0][word_counter] = data[31:0];
+            cache_data [0][0][word_counter+1] = data[62:32];
+          
+          end
+          
+          word_counter = word_counter + 2;
         end
 
+      $display ("cache_data [0][0][0]: %h", cache_data [0][0][0]);
+      $display ("cache_data [0][0][1]: %h", cache_data [0][0][1]);
+      
       $display ("L2 write data: %h", write_data_L1);
     end
     
