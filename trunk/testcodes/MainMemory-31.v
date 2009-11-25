@@ -64,7 +64,7 @@
 
 */
 
-module MainMemory (we, addr, data, stb);
+module MainMemory (we, addrstb, addr, data, stb);
 
   // Parameter decleration
   parameter ADDR_WIDTH = 32;
@@ -77,7 +77,7 @@ module MainMemory (we, addr, data, stb);
 
   
   // I/O port declarations
-  input we;
+  input we, addrstb;
   input addr;
   
   inout [DATA_WIDTH-1:0] data;
@@ -88,6 +88,7 @@ module MainMemory (we, addr, data, stb);
 
   // Net and variable declarations  
   wire we;
+  wire addrstb;
   wire [ADDR_WIDTH-1:0] addr;  
   
   reg stb;
@@ -108,15 +109,16 @@ module MainMemory (we, addr, data, stb);
     stb = 0;
     burst_counter = BURST_LENGTH;
   end
-  
+    
   // Process request when we or addr changes
-  always @ (we or addr)
+  always @ (posedge addrstb or negedge addrstb)
   begin
   
     // Construct output data by expanding zeros in upper 32 bits to addr
     //write_data = {32'h0,addr};
+    #1;
     
-    if(we)                    //output data if we is asserted.
+    if(we)                    //output data if we is not asserted.
 
     begin
       
@@ -127,7 +129,7 @@ module MainMemory (we, addr, data, stb);
          //so that the each chunk of data represents the starting address of 
          //the 64 bit chunk. 
          #1 write_data [31:0] = addr + (BURST_LENGTH-burst_counter)*BURST_INCREMENT;
-            write_data [63:32] = addr + (BURST_LENGTH-burst_counter)*BURST_INCREMENT+1;
+            write_data [63:32] = addr + (BURST_LENGTH-burst_counter)*BURST_INCREMENT+BURST_INCREMENT/2;
          #1 stb = ~stb;                    // Toggle strobe when data is ready
             burst_counter = burst_counter - 1;
        end
@@ -139,7 +141,7 @@ module MainMemory (we, addr, data, stb);
    else if(!we)    // No operation when we is de-asserted
      begin
 
-       //#0.5 stb = ~stb;
+       #0.5 stb = ~stb;
 
      end
   end
