@@ -19,6 +19,7 @@
 //testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest
 */
 
+//testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest
   //Test code to display all lines
   
     for (way = 0; way < CACHE_WAY_SIZE; way = way + 1)
@@ -39,4 +40,7 @@
         
       end
     end
-  //Test code to display all lines
+//testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest    
+
+    
+    $display("Tag: %d Index: %d Word %d", addr_tag, addr_index, addr_word);    
