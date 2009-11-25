@@ -44,3 +44,10 @@
 
     
     $display("Tag: %d Index: %d Word %d", addr_tag, addr_index, addr_word);    
+    
+          $display ("way: %d", way);                 
+      $display ("addr_tag: %d", addr_tag);                 
+      $display ("addr_index: %d", addr_index);                        
+      $display ("addr_word: %d", addr_word);                 
+      
+      $display ("cache_data[way][addr_index][addr_word]: %h", cache_data[way][addr_index][addr_word]);                 

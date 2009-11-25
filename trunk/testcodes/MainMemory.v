@@ -64,7 +64,7 @@
 
 */
 
-module MainMemory (we, addr, data, stb);
+module MainMemory (we, addrstb, addr, data, stb);
 
   // Parameter decleration
   parameter ADDR_WIDTH = 32;
@@ -72,12 +72,12 @@ module MainMemory (we, addr, data, stb);
   parameter HIGH_Z = 64'bz; //High impedance value for birdirectional bus
 
   parameter BURST_WIDTH = 64;
-  parameter BURST_INCREMENT = 64;
+  parameter BURST_INCREMENT = 64'd64;
   parameter BURST_LENGTH = 8;
 
   
   // I/O port declarations
-  input we;
+  input we, addrstb;
   input addr;
   
   inout [DATA_WIDTH-1:0] data;
@@ -88,6 +88,7 @@ module MainMemory (we, addr, data, stb);
 
   // Net and variable declarations  
   wire we;
+  wire addrstb;
   wire [ADDR_WIDTH-1:0] addr;  
   
   reg stb;
@@ -108,16 +109,17 @@ module MainMemory (we, addr, data, stb);
     stb = 0;
     burst_counter = BURST_LENGTH;
   end
-  
+    
   // Process request when we or addr changes
-  always @ (negedge we or posedge we or addr)
+  always @ (posedge addrstb or negedge addrstb)
   begin
   
     // Construct output data by expanding zeros in upper 32 bits to addr
     //write_data = {32'h0,addr};
+    #1;
     
-    //if(we)                    //output data if we is asserted.
-    if(1)
+    if(we)                    //output data if we is not asserted.
+
     begin
       
       // Burst out data 
@@ -130,21 +132,18 @@ module MainMemory (we, addr, data, stb);
             write_data [63:32] = addr + (BURST_LENGTH-burst_counter)*BURST_INCREMENT+BURST_INCREMENT/2;
          #1 stb = ~stb;                    // Toggle strobe when data is ready
             burst_counter = burst_counter - 1;
-            $display("write_data: %h", write_data);
        end
             
        burst_counter = BURST_LENGTH; //re-set burst_counter to the burst length.
 
    end
-/*
+
    else if(!we)    // No operation when we is de-asserted
      begin
 
-       //#0.5 stb = ~stb;
+       #0.5 stb = ~stb;
 
      end
-*/
-
   end
 
 endmodule
