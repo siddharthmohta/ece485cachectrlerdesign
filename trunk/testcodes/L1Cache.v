@@ -67,7 +67,7 @@
      ==========================================================================  
 */
 
-module L1Cache (stall, addr, we, data);
+module L1Cache (stall, addrstb, addr, we, data);
 
   // Parameter decleration
   parameter ADDR_WIDTH = 32;
@@ -87,7 +87,7 @@ module L1Cache (stall, addr, we, data);
   // I/O port declarations
   input stall;
   
-  output addr, we;
+  output addr, addrstb, we;
   
   inout [DATA_WIDTH-1:0] data;
   //conditional assignment to bidirectional data ports
@@ -95,6 +95,8 @@ module L1Cache (stall, addr, we, data);
   
   // Net and variable declarations  
   wire stall;
+  
+  reg addrstb;
   
   reg [ADDR_WIDTH-1:0] addr;
   reg we, data_dir;
@@ -114,6 +116,7 @@ module L1Cache (stall, addr, we, data);
     data_dir = DATA_BUS_READ;
     we = 1;
     addr = 32'd0;
+    addrstb = 1;
   end  
 
 /*
@@ -151,6 +154,7 @@ module L1Cache (stall, addr, we, data);
           data_dir = DATA_BUS_READ;     //set data ports to high impedence
           we = 1;                       //de-assert write enable 
           addr = address;               //output address
+          addrstb = ~addrstb;
           
           // Wait until stall is de-asserted
           @ (negedge stall)
@@ -162,28 +166,33 @@ module L1Cache (stall, addr, we, data);
         else if (command == 1)           //process data write requests
         begin
         
+          write_data = 10;
+                      $display("Data from L1A: %h", write_data);
           data_dir = DATA_BUS_WRITE;     //let write_data regs to drive the bus 
+          
           we = 0;                        //assert write enable
           
           //construct output value by concatinating
           //lower 16 bits of the addr value and 0xAAAA
 
-          write_data = addr[15:0];
           //write_data[31:16] = addr[15:0];
           //write_data[15:0]  = 16'haaaa;
           
           addr = address;                //output address
+          addrstb = ~addrstb;
           
           // Wait until stall is de-asserted
           @ (negedge stall)
-            //$display("Data from L1: %h", write_data);
+            $display("Data from L1B: %h", write_data);
           we = 1;
           
         end
 
       // Read in the command and address of next reference from the trace file.
       fin_status = $fscanf(fin, "%d %h", command, address);
-      
+
+      //addrstb = 1;
+
       end
     
     end
