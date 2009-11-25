@@ -39,7 +39,7 @@ module L1( stall, L1cmd, L1addr, L1data );
       
       while( fin_status != EOF )
       begin 
-        if( stall == OFF )
+        if( stall )
         begin
           // Display the read-in values to STDOUT.
           //$display( "command == %0d\taddress == %h\tdata == %h", L1cmd, L1addr, L1data );
