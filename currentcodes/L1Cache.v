@@ -167,7 +167,8 @@ module L1Cache (stall, addrstb, addr, we, data);
         begin
         
           write_data = 10;
-                      $display("Data from L1A: %h", write_data);
+          $display("Data from L1: %h", write_data);
+          
           data_dir = DATA_BUS_WRITE;     //let write_data regs to drive the bus 
           
           we = 0;                        //assert write enable
@@ -181,10 +182,9 @@ module L1Cache (stall, addrstb, addr, we, data);
           addr = address;                //output address
           addrstb = ~addrstb;
           
-          // Wait until stall is de-asserted
+          // Wait until stall is de-asserted and de-assert we
           @ (negedge stall)
-            $display("Data from L1B: %h", write_data);
-          we = 1;
+            we = 1;
           
         end
 
