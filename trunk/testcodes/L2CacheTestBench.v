@@ -26,7 +26,13 @@ L2CacheTest L2(stb, weL1L2, addrstbL1L2, addrL1L2, stall, weL2MEM, addrstbL2MEM,
 MainMemory MEM(weL2MEM, addrstbL2MEM, addrL2MEM, dataL2MEM, stb);
 
 initial
-$monitor("%b", addrstbL2MEM);
+begin
+
+  $monitor("Hit:%0d", L2.cache_hit_counter);
+  
+  $monitor("Miss:%0d", L2.cache_miss_counter);
+
+end
 
 end
 

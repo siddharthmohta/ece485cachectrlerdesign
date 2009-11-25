@@ -44,7 +44,7 @@ module L2CacheTest(stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM, 
   // Cache specific parameters
   parameter CACHE_WORD_SIZE = 32;
   parameter CACHE_WAY_SIZE = 2;
-  parameter CACHE_INDEX_SIZE = 4;
+  parameter CACHE_INDEX_SIZE = 3;
   parameter CACHE_LINE_SIZE = BURST_LENGTH * DATA_WIDTH_L2/CACHE_WORD_SIZE;
   //parameter CACHE_LINE_SIZE = BURST_LENGTH * 2 * CACHE_WORD_SIZE;
   parameter CACHE_PLRU_WIDTH = 3;  
@@ -135,8 +135,16 @@ module L2CacheTest(stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM, 
 ******************************************************************************/
   // Initialize variables
   initial
+  begin
+  
     addrstb_MEM = 0;
-  //stall = 0; - shouldn't be done
+    
+    cache_hit_counter = 0;
+    cache_miss_counter = 0;
+    
+    //stall = 0; - shouldn't be done
+  end
+
   
   
   // Initialize Cache and PLRU to zero values
@@ -204,6 +212,7 @@ module L2CacheTest(stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM, 
     begin
      
       $display("L2 MISS");
+      cache_miss_counter = cache_miss_counter + 1;
       
       Look_For_Invalid (addr_index, way, found);
        
@@ -248,7 +257,12 @@ module L2CacheTest(stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM, 
     Cache Hit
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/    
     else if (found)
+    begin
+
       $display("L2 HIT");
+      cache_hit_counter = cache_hit_counter + 1;
+      
+    end
 
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     Process Write Request from L1 (L1 writes to L2)
@@ -281,30 +295,15 @@ module L2CacheTest(stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM, 
        end
       
 
-       write_data_L1 = cache_data[way][addr_index][addr_word-1];
+       write_data_L1 = cache_data[way][addr_index][addr_word];
  
        $display("L1 Read");
        $display ("L2 write data: %h", write_data_L1);
        
+       $display("Way: %0d Tag: %0d Index: %0d Word %0d", way, addr_tag, addr_index, addr_word);
+       
      end
-   
-//testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest
-// Test Code to display all contents
-
-    for (way = 0; way < CACHE_WAY_SIZE; way = way + 1)
-    begin
-      $display ("  way: %d", way);                  
-      for(index = 0; index < CACHE_INDEX_SIZE; index = index + 1)
-      begin
-        $display ("    index: %d", index);
-        for(word = 0; word < CACHE_LINE_SIZE; word = word + 1)
-        begin
-          $display ("      Word: %d Content: %h", word, cache_data [way][index][word]);
-        end
-      end
-    end
-//testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest
-   
+  
     #1 stall = 0;
     
   end
@@ -429,8 +428,8 @@ module L2CacheTest(stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM, 
       cache_valid[_way][_index] = 1;
       cache_dirty[_way][_index] = 0;  
       
-      #2;
-      
+      $display ("      Word: %d Content: %h", 0, cache_data [_way][_index][0]);
+     
   end
   endtask
     
