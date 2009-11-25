@@ -191,8 +191,6 @@ module L1Cache (stall, addrstb, addr, we, data);
       // Read in the command and address of next reference from the trace file.
       fin_status = $fscanf(fin, "%d %h", command, address);
 
-      //addrstb = 1;
-
       end
     
     end
