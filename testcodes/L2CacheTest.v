@@ -43,11 +43,12 @@ module L2CacheTest(stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM, 
   
   // Cache specific parameters
   parameter CACHE_WORD_SIZE = 32;
-  parameter CACHE_WAY_SIZE = 2;
+  parameter CACHE_WAY_SIZE = 4;
   parameter CACHE_INDEX_SIZE = 3;
   parameter CACHE_LINE_SIZE = BURST_LENGTH * DATA_WIDTH_L2/CACHE_WORD_SIZE;
   //parameter CACHE_LINE_SIZE = BURST_LENGTH * 2 * CACHE_WORD_SIZE;
-  parameter CACHE_PLRU_WIDTH = 3;  
+  parameter CACHE_PLRU_WIDTH = 3;
+  parameter CACHE_LRU_WIDTH = 2; 
 
   parameter CACHE_TAG_WIDTH = 14;
   parameter CACHE_TAG_MSB = 31;
@@ -129,6 +130,7 @@ module L2CacheTest(stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM, 
   
   // PLRU
   reg [CACHE_PLRU_WIDTH-1:0] cache_plru[CACHE_INDEX_SIZE-1:0];
+  reg [CACHE_LRU_WIDTH-1:0] cache_lru[CACHE_WAY_SIZE-1:0][CACHE_INDEX_SIZE-1:0];
 
 /******************************************************************************
                               INITIALIZATION
@@ -170,10 +172,16 @@ module L2CacheTest(stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM, 
 
     for (index = 0; index < CACHE_INDEX_SIZE; index = index + 1)
        cache_plru [index] = 0;
+    
+    for (index = 0; index < CACHE_INDEX_SIZE; index = index + 1)
+      for (way = 0; way < CACHE_WAY_SIZE; way = way + 1)
+        cache_lru [way][index] = way;
  
     cache_hit_counter = 0;
     cache_miss_counter = 0;
-  end
+    
+    
+    end
 
   // Initialize variables
   //initial
@@ -190,7 +198,7 @@ module L2CacheTest(stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM, 
   
     data_dir_L1 = ~we_L1;
     
-    found = 0;
+    found = FALSE;
     
     // Address decoding
     addr_tag = addr_L1[CACHE_TAG_MSB:CACHE_TAG_LSB];
@@ -201,110 +209,133 @@ module L2CacheTest(stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM, 
     #1;
     
     $display("Tag: %d Index: %d Word %d", addr_tag, addr_index, addr_word);
+
     
     Look_For_Match (addr_index, addr_tag, way, found);
 
-/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    Cache Miss
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-
-    if(!found)
+/*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    Process Cache Write Request
+*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
+    
+    if(!we_L1)           //when we_L1 asserted, process L1 write
     begin
+      
+/*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    Cache Write Miss
+*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
+
+      if(!found)
+      begin
      
       $display("L2 MISS");
       cache_miss_counter = cache_miss_counter + 1;
       
       Look_For_Invalid (addr_index, way, found);
-       
-/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    Replacement (if empty slot not found)
-    & Write back drity line
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/      
-      
-      if(!found)
-        Replacement (addr_index, way);
+      if(!found)                       //Evict if empty line not found
+        Replacement_Way_Lookup (addr_index, way);
         
-      //Write back a line
-      if(cache_dirty[way][addr_index])
-        Write_Back (addr_index, way);
-      
       Fill_Cache_Line (addr_tag, addr_index, way);
-/*
-      if(!we_L1)           //when we_L1 asserted, process L1 write
-      begin
-    
-        cache_data[way][addr_index][addr_word] = data_L1;
-        cache_dirty[way][addr_index] = TRUE;
-      
-        $display("L1 Write");
-        $display("Data from L1: %h", data_L1);
-      
-      end
-      
-      else if(we_L1)      //when we_L1 de-asserted, process L1 read(=output data)
-      begin
-      
-        write_data_L1 = cache_data[way][addr_index][addr_word];
+  
+      Cache_Write (way, addr_index, addr_word);
 
-        $display("L1 Read");
-        $display ("L2 write data: %h", write_data_L1);
-      
+//testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest
+// Test Code to display all contents
+      for(index = 0; index < CACHE_INDEX_SIZE; index = index + 1)
+      begin
+        $display ("    index: %d", index);
+        for(word = 0; word < CACHE_LINE_SIZE; word = word + 1)
+        begin
+          $display ("      Word: %d Content: %h", word, cache_data [way][index][word]);
+        end
       end
-*/      
-    end
+     
+      end
+//testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest      
     
-/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+/**%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     Cache Hit
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/    
-    else if (found)
-    begin
+*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/    
+
+      else if (found)
+      begin
 
       $display("L2 HIT");
       cache_hit_counter = cache_hit_counter + 1;
+
+      Cache_Write (way, addr_index, addr_word);
+      
+      end
       
     end
-
-/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    Process Write Request from L1 (L1 writes to L2)
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
     
-      if(!we_L1)           //when we_L1 asserted, process L1 write
+/*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    Process Read Request
+*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/    
+
+    else if(we_L1)      //when we_L1 de-asserted, process L1 read(=output data)
+    begin
+         
+/*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    Cache Read Miss
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
+
+      if(!found)
       begin
-      
-        cache_data[way][addr_index][addr_word] = data_L1;
-        cache_dirty[way][addr_index] = TRUE;
+       
+        $display("L2 MISS");
+        cache_miss_counter = cache_miss_counter + 1;
         
-        $display("L1 Write");
-        $display("Data from L1: %h", data_L1);
+        Look_For_Invalid (addr_index, way, found);
+         
+        if(!found)                       //Evict if empty line not found
+          Replacement_Way_Lookup (addr_index, way);
+          
+        Fill_Cache_Line (addr_tag, addr_index, way);
+       
+        Cache_Read (way, addr_index, addr_word); 
+
+//testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest
+// Test Code to display all contents
+      for(index = 0; index < CACHE_INDEX_SIZE; index = index + 1)
+      begin
+        $display ("    index: %d", index);
+        for(word = 0; word < CACHE_LINE_SIZE; word = word + 1)
+        begin
+          $display ("      Word: %d Content: %h", word, cache_data [way][index][word]);
+        end
+      end
+     
+//testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest      d
         
       end
     
-/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    Process Read Request from L1 (L2 writes to L1)
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/    
+/*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    Cache Read Hit
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
-     else if(we_L1)      //when we_L1 de-asserted, process L1 read(=output data)
-     begin
+      else if (found)
+      begin
 
-       if(cache_dirty[way][addr_index])
-       begin
-
-          Write_Back (addr_index, way);       $display ("way: %d", way);                 
-          Fill_Cache_Line (addr_tag, addr_index, way);
-          
-       end
+        $display("L2 HIT");
+        cache_hit_counter = cache_hit_counter + 1;
       
+        if(cache_dirty[way][addr_index])  //Evict dirty line
+        begin
 
-       write_data_L1 = cache_data[way][addr_index][addr_word];
+           Write_Back (addr_index, way);  
+           Fill_Cache_Line (addr_tag, addr_index, way);
+          
+        end
+
+      Cache_Read (way, addr_index, addr_word);
+      
+      end
+
+    end
+    
+    Replacement_Update (addr_index, way);
  
-       $display("L1 Read");
-       $display ("L2 write data: %h", write_data_L1);
-       
-       $display("Way: %0d Tag: %0d Index: %0d Word %0d", way, addr_tag, addr_index, addr_word);
-       
-     end
-  
-    #1 stall = 0;
+    #1 stall = 0;          //de-assetrt stall
     
   end
   
@@ -327,11 +358,15 @@ module L2CacheTest(stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM, 
     
     while (_way < CACHE_WAY_SIZE && !_found)
     begin 
+    
       if (cache_valid[_way][_index] && cache_tag[_way][_index] == _tag)
         _found = TRUE;
+        
       else
         _way = _way + 1;
-    end
+        
+    end  
+    
   end
   
   endtask
@@ -363,18 +398,6 @@ module L2CacheTest(stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM, 
   
   endtask
 
-/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    Task: Replacement Policy
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-
-  task automatic Replacement ( input [CACHE_INDEX_WIDTH-1:0] _index,
-                               output [2:0] _way);
-
-  begin      
-            _way = {$random} % CACHE_WAY_SIZE;
-  end
-  
-  endtask
 
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     Task: Evict_Cache_Line
@@ -432,5 +455,148 @@ module L2CacheTest(stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM, 
      
   end
   endtask
+
+/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    Task: Cache Write
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+  
+  task Cache_Write (input [2:0] _way,
+                    input [CACHE_INDEX_WIDTH-1:0] _index,
+                    input [CACHE_WORD_WIDTH-1:0] _word);
+  begin
+  
+        cache_data[_way][_index][_word] = data_L1;
+        cache_dirty[_way][_index] = TRUE;
+        
+        $display("L1 Write");
+        $display("Data from L1: %h", data_L1);
+        
+  end
+  endtask
+  
+/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    Task: Cache Read
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+  
+  task Cache_Read (input [2:0] _way,
+                    input [CACHE_INDEX_WIDTH-1:0] _index,
+                    input [CACHE_WORD_WIDTH-1:0] _word);
+  begin
+  
+       write_data_L1 = cache_data[_way][_index][_word];
+ 
+       $display("L1 Read");
+       $display ("L2 write data: %h", write_data_L1);
+       
+       $display("Way: %0d Tag: %0d Index: %0d Word %0d", way, addr_tag, addr_index, addr_word);
+        
+  end
+  endtask        
+
+
+
+
+/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    Task: Replacement Policy (Random)
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+/*
+  task automatic Replacement_Way_Lookup ( input [CACHE_INDEX_WIDTH-1:0] _index,
+                                          output [2:0] _way);
+
+  begin      
+            _way = {$random} % CACHE_WAY_SIZE;
+  end
+  
+  endtask
+  
+
+  task automatic Replacement_Update (input [CACHE_INDEX_WIDTH-1:0] _index,
+                                     input [2:0] _way);
+  begin
+  end
+  endtask
+*/
+/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    Tasks: Replacement Policy (PLRU)
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+/*
+  task automatic Replacement_Way_Lookup (input [CACHE_INDEX_WIDTH-1:0] _index,
+                                         output [2:0] _way);
+  begin
+  
+    casex(cache_plru[_index])  
+      3'b00x : _way = 0;
+      3'b01x : _way = 1;
+      3'b1x0 : _way = 2;
+      3'b1x1 : _way = 3;
+    endcase
     
+  end
+  endtask
+ 
+  task automatic Replacement_Update (input [CACHE_INDEX_WIDTH-1:0] _index,
+                                     input [2:0] _way);
+  begin
+    case(_way)
+      0 : begin
+            cache_plru[_index][2] = 1'b1;
+            cache_plru[_index][1] = 1'b1;
+          end
+      1 : begin  
+            cache_plru[_index][2] = 1'b1;
+            cache_plru[_index][1] = 1'b0;
+          end
+      2 : begin
+            cache_plru[_index][2] = 1'b0;
+            cache_plru[_index][0] = 1'b1;
+          end
+      3 : begin
+            cache_plru[_index][2] = 1'b0;
+            cache_plru[_index][0] = 1'b0;
+          end
+    endcase
+  end
+  endtask
+*/
+/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    Tasks: Replacement Policy (LRU)
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+
+  task automatic Replacement_Way_Lookup (input [CACHE_INDEX_WIDTH-1:0] _index,
+                                         output [2:0] _way);
+  begin 
+  
+    way_counter = 0;
+  
+    while (way_counter < CACHE_WAY_SIZE && cache_lru[way_counter][_index])
+      way_counter = way_counter + 1;
+        
+    _way = way_counter;
+    
+    $display ("_way: %d", _way);
+
+  end
+  endtask
+ 
+  task automatic Replacement_Update (input [CACHE_INDEX_WIDTH-1:0] _index,
+                                     input [2:0] _way);
+  begin
+  
+      for (way_counter = 0; way_counter < CACHE_WAY_SIZE; way_counter = way_counter + 1)
+      begin
+        
+        if (cache_lru[way_counter][_index] > cache_lru[_way][_index])
+          cache_lru[way_counter][_index] = cache_lru[way_counter][_index] - 1;
+        
+      end
+      
+      $display ("cache_lru[_way][_index] %d", cache_lru[_way][_index]);
+      
+      cache_lru[_way][_index] = CACHE_WAY_SIZE-1;
+      
+
+
+  end
+  endtask
+
 endmodule
