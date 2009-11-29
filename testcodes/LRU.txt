@@ -1,0 +1,50 @@
+/* use this code with Jinho's L2_v2
+use choose_way and update_LRU_counter instead of Plru and Update_Plru task
+*/
+
+
+//Constants
+parameter LRU_BITS = 2;
+
+
+//LRU structure
+reg [LRU_BITS-1:0] LRU_counter[CACHE_INDEX_SIZE:0][CACHE_WAY_SIZE-1:0];
+
+
+//Initialization
+/* LRU_counter[index][way]
+   LRU_counter[0][0] = 0;
+   LRU_counter[0][1] = 1;
+   LRU_counter[0][2] = 2;
+   LRU_counter[0][3] = 3;
+   LRU_counter[1][0] = 0; */
+
+  initial
+  begin
+    for (index = 0; index < CACHE_INDEX_SIZE; index = index + 1)
+      for (way = 0; way < CACHE_WAY_SIZE; way = way + 1)
+      begin
+	LRU_counter[index][way] = way;
+      end
+  end
+
+
+//Tasks
+  task automatci choose_way (input [12:0] _CACHE_INDEX_SIZE, output [2:0] _way);
+  begin
+    _way = 0;
+
+    while (LRU_counter[_CACHE_INDEX_SIZE][_way] != 0)
+    begin
+      _way = _way + 1;
+    end
+  end
+  endtask
+
+  task automatic update_LRU_conter (input [2:0] _way, input [12:0] _CACHE_INDEX_SIZE);
+  begin
+    LRU_counter[_way][_CACHE_INDEX_SIZE] = 0;
+    for (way = 0; way < _way; way = way + 1)
+      LRU_counter[way] = way + 1;
+  end
+  endtask

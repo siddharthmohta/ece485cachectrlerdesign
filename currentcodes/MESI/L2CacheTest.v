@@ -466,7 +466,7 @@ module L2CacheTest(stb, we_L1, snoop, addrstb_L1, addr_L1, stall, we_MEM, addrst
     Check if empty slot present
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
-  task automatic Look_For_Invalid_Line ( input [CACHE_INDEX_WIDTH-1:0] _index,
+  task automatic Look_For_Invalid ( input [CACHE_INDEX_WIDTH-1:0] _index,
                                     output [2:0] _way,
                                     output _found );
   begin      
