@@ -5,6 +5,33 @@
   //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
   //Debug Mode\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\
 
+  //testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest
+  //Test code to display mesi
+if (debug)
+begin
+
+  
+    for (way_counter = 0; way_counter < CACHE_WAY_SIZE; way_counter = way_counter + 1)
+    begin
+      
+	  $display ("Way: %0d", way_counter);
+	  
+      for(line_counter = 0; line_counter < CACHE_INDEX_SIZE; line_counter = line_counter + 1)
+      begin
+      
+	    $display ("       Index: %0d", line_counter);
+	  
+          $display ("                MESI: %h", cache_MESI	[way_counter][line_counter]);
+          //$display ("Way: %0d Index: %0d, Word: %0d Content: %h", way, index, word, cache_data	[way][index][word]);
+          
+        end
+        
+      end
+
+	
+end	
+//testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest  t
+  
 //testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest
   //Test code to display all lines
 if (debug)

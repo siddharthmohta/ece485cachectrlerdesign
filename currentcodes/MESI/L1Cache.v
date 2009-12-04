@@ -115,6 +115,8 @@ module L1Cache (stall, addrstb, addr, we, snoop, data);
   // Initialize variables
   initial
   begin
+  #5
+  
     data_dir = DATA_BUS_READ;
     we = 1;
     addr = 32'd0;
@@ -132,6 +134,8 @@ module L1Cache (stall, addrstb, addr, we, snoop, data);
 
   initial
   begin
+  #5
+  
     // Open trace file for processing.
     fin = $fopen( TRACE_FILE, "r" );
     

@@ -32,18 +32,18 @@ wire [63:0] dataL2MEM;
 
 reg debug = ON;
 
-reg [1:0] rep = PLRU;
+reg [1:0] replacement = LRU;
 
 L1Cache L1(stall, addrstbL1L2, addrL1L2, weL1L2, dataL1L2, debug);
-L2CacheTest L2(stb, weL1L2, addrstbL1L2, addrL1L2, stall, weL2MEM, addrstbL2MEM, addrL2MEM, dataL1L2, dataL2MEM, debug, rep);
+L2CacheTest L2(stb, weL1L2, addrstbL1L2, addrL1L2, stall, weL2MEM, addrstbL2MEM, addrL2MEM, dataL1L2, dataL2MEM, debug, replacement);
 MainMemory MEM(weL2MEM, addrstbL2MEM, addrL2MEM, dataL2MEM, stb);
 
 initial
 begin
 
-  $monitor("Hit:%0d", L2.cache_hit_counter);
+  //$monitor("Hit:%0d", L2.cache_hit_counter);
   
-  $monitor("Miss:%0d", L2.cache_miss_counter);
+  //$monitor("Miss:%0d", L2.cache_miss_counter);
 
 end
 
