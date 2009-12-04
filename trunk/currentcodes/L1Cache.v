@@ -118,7 +118,8 @@ module L1Cache (stall, addrstb, addr, we, data, debug);
     data_dir = DATA_BUS_READ;
     we = 1;
     addr = 32'd0;
-    addrstb = 1;
+    addrstb = 1
+    ;
   end  
 
   // Begin
@@ -138,8 +139,11 @@ module L1Cache (stall, addrstb, addr, we, data, debug);
     begin
     
       begin
+      
  if (debug) $display("=================================================================");
+ 
  // Display the read-in values to STDOUT.
+ 
  if(debug) $display( "command:%0d\taddress:%h\t", command, address);
         
         //Decode the command value and make L2 cache request accordingly        
@@ -151,8 +155,10 @@ module L1Cache (stall, addrstb, addr, we, data, debug);
         begin                                 //instruction fetch requests.
 
           data_dir = DATA_BUS_READ;     //set data ports to high impedence
+
           we = 1;                       //de-assert write enable 
           addr = address;               //output address
+
           addrstb = ~addrstb;
           
           // Wait until stall is de-asserted
@@ -184,7 +190,7 @@ module L1Cache (stall, addrstb, addr, we, data, debug);
           // Wait until stall is de-asserted and de-assert we
           @ (negedge stall)
             we = 1;
-          
+
         end
 
       // Read in the command and address of next reference from the trace file.
@@ -199,6 +205,8 @@ module L1Cache (stall, addrstb, addr, we, data, debug);
     
     $display("Hit:%0d", L2.cache_hit_counter);
     $display("Miss:%0d", L2.cache_miss_counter);
+     
+    // More statistics 
         
     $finish;
   end
