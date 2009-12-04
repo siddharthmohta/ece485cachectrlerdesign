@@ -67,7 +67,7 @@ module L2CacheTest(stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM, 
 
   //parameter CACHE_INDEX_WIDTH = 12;
   //parameter CACHE_INDEX_WIDTH = 8;
-  parameter CACHE_INDEX_WIDTH = 6;
+  parameter CACHE_INDEX_WIDTH = 32-CACHE_TAG_WIDTH-CACHE_WORD_WIDTH;
 
   parameter CACHE_INDEX_MSB = CACHE_TAG_LSB-1;
   parameter CACHE_INDEX_LSB = CACHE_INDEX_MSB-CACHE_INDEX_WIDTH+1;
@@ -85,7 +85,7 @@ module L2CacheTest(stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM, 
 
   // I/O ports that interface L1Cache module
   input we_L1, addrstb_L1, addr_L1;
-  output stall, addrstb_MEM;
+  output stall;
   inout [DATA_WIDTH_L1-1:0] data_L1;
 
   assign data_L1  = (data_dir_L1) ? 64'bz : write_data_L1;
@@ -93,7 +93,7 @@ module L2CacheTest(stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM, 
                                                        //to bidirectional port
   // I/O ports that interface MainMemory module
   input stb;
-  output we_MEM, addr_MEM;
+  output we_MEM, addr_MEM, addrstb_MEM;
   inout [DATA_WIDTH_L2-1:0] data_MEM;
 
   assign data_MEM = (data_dir_MEM)? 64'bz : write_data_MEM;
@@ -127,6 +127,7 @@ module L2CacheTest(stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM, 
   // Counter, loop control veriables
   integer burst_counter,line_counter,way_counter,word_counter;      
   integer way, index, line, word;
+
   integer cache_hit_counter, cache_miss_counter;
   
 
@@ -145,7 +146,7 @@ module L2CacheTest(stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM, 
   reg [CACHE_INDEX_WIDTH-1:0] addr_index;
   reg [CACHE_WORD_WIDTH-1:0] addr_word;
   
-  // PLRU
+  // Replacement
   reg [CACHE_PLRU_WIDTH-1:0] cache_plru[CACHE_INDEX_SIZE-1:0];
   reg [CACHE_LRU_WIDTH-1:0] cache_lru[CACHE_WAY_SIZE-1:0][CACHE_INDEX_SIZE-1:0];
 
@@ -161,7 +162,6 @@ module L2CacheTest(stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM, 
     cache_hit_counter = 0;
     cache_miss_counter = 0;
     
-    //stall = 0; - shouldn't be done
   end
   
   
@@ -196,14 +196,9 @@ module L2CacheTest(stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM, 
       for (way = 0; way < CACHE_WAY_SIZE; way = way + 1)
         cache_lru [way][index] = way;
  
-    cache_hit_counter = 0;
-    cache_miss_counter = 0;
 
     end
 
-  // Initialize variables
-  //initial
-  //stall = 0; - shouldn't be done
 
 /******************************************************************************
                         CACHE READ/WRITE REQUEST PROCESSING
@@ -249,50 +244,36 @@ module L2CacheTest(stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM, 
       begin
      
  if(debug) $display("L2 MISS");
+
       cache_miss_counter = cache_miss_counter + 1;
       
       Look_For_Invalid (addr_index, way, found);
+
       if(!found)                       //Evict if empty line not found
-	  begin
-		case (rep)
-		  RANDOM: Replacement_Way_Lookup_Random (addr_index, way);
-		  PLRU  : Replacement_Way_Lookup_PLRU   (addr_index, way);
-		  LRU   : Replacement_Way_Lookup_LRU   (addr_index, way);
-		endcase
-	  end
+	    begin
+	  	case (rep)
+	  	  RANDOM: Replacement_Way_Lookup_Random (addr_index, way);
+		    PLRU  : Replacement_Way_Lookup_PLRU   (addr_index, way);
+		    LRU   : Replacement_Way_Lookup_LRU   (addr_index, way);
+  		endcase
+	    end
         
       Cache_Line_Fill (addr_tag, addr_index, way);
   
       Cache_Write (way, addr_index, addr_word);
 
 
-/*	  
-//testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest
-// Test Code to display all contents
- if(debug)
- begin 
-      for(line_counter = 0; line_counter < CACHE_INDEX_SIZE; line_counter = line_counter + 1)
-      begin
-        $display ("    index: %d", index);
-        for(word_counter = 0; word_counter < CACHE_LINE_SIZE; word_counter = word_counter + 1)
-        begin
-          $display ("      Word: %d Content: %h", word, cache_data [way_counter][line_counter][word_counter]);
-        end
-      end
-     
-  end
-//testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest      
-*/ 
  end  
   
 /**%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    Cache Hit
+    Cache Write Hit
 *%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/    
 
       else if (found)
       begin
 
  if(debug) $display("L2 HIT");
+
       cache_hit_counter = cache_hit_counter + 1;
 
       Cache_Write (way, addr_index, addr_word);
@@ -316,18 +297,21 @@ module L2CacheTest(stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM, 
       begin
        
  if(debug) $display("L2 MISS");
-        cache_miss_counter = cache_miss_counter + 1;
+ 
+      cache_miss_counter = cache_miss_counter + 1;
         
-        Look_For_Invalid (addr_index, way, found);
+      Look_For_Invalid (addr_index, way, found);
          
       if(!found)                       //Evict if empty line not found
-	  begin
-		case (rep)
-		  RANDOM: Replacement_Way_Lookup_Random (addr_index, way);
-		  PLRU  : Replacement_Way_Lookup_PLRU   (addr_index, way);
-		  LRU   : Replacement_Way_Lookup_LRU   (addr_index, way);
-		endcase
-	  end
+   	  begin
+      
+     		case (rep)
+     		  RANDOM: Replacement_Way_Lookup_Random (addr_index, way);
+     		  PLRU  : Replacement_Way_Lookup_PLRU   (addr_index, way);
+     		  LRU   : Replacement_Way_Lookup_LRU   (addr_index, way);
+     		endcase
+       
+  	  end
           
         Cache_Line_Fill (addr_tag, addr_index, way);
        
@@ -379,24 +363,20 @@ if(debug) $display("L2 HIT");
 
         cache_hit_counter = cache_hit_counter + 1;
       
-        if(cache_dirty[way][addr_index])  //Evict dirty line
-        begin
-
-           Write_Back (addr_index, way);  
-           Cache_Line_Fill (addr_tag, addr_index, way);
-          
-        end
-
-      Cache_Read (way, addr_index, addr_word);
+        Cache_Read (way, addr_index, addr_word);
       
       end
 
     end
+
+/*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    Update Replacement Policy Regs
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
     
 	case (rep)
 	  RANDOM: Replacement_Update_Random (addr_index, way);
 	  PLRU  : Replacement_Update_PLRU   (addr_index, way);
-      LRU   : Replacement_Update_LRU    (addr_index, way);
+    LRU   : Replacement_Update_LRU    (addr_index, way);
 	endcase
  
     #1 stall = 0;          //de-assetrt stall
@@ -557,6 +537,7 @@ if(debug) $display("L2 HIT");
   begin
   
         cache_data[_way][_index][_word] = data_L1;
+
         cache_dirty[_way][_index] = TRUE;
         
  if (debug) $display("L1 Write");
