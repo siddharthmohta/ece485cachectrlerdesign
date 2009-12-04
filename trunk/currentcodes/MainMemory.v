@@ -4,7 +4,7 @@
   
   Tachchai Buraparatana
   Jinho Park
-  Antonio Romano
+  Anthony Romano
   Hoa Quach
   
   
@@ -65,15 +65,15 @@
 */
 
 module MainMemory (we, addrstb, addr, data, stb);
-
+   
   // Parameter decleration
   parameter ADDR_WIDTH = 32;
   parameter DATA_WIDTH = 64;
   parameter HIGH_Z = 64'bz; //High impedance value for birdirectional bus
 
   parameter BURST_WIDTH = 64;
-  parameter BURST_INCREMENT = 64'd64;
-  parameter BURST_LENGTH = 8;
+  parameter BURST_INCREMENT = 64'd8;
+  parameter BURST_LENGTH = 2;
 
   
   // I/O port declarations
@@ -110,7 +110,7 @@ module MainMemory (we, addrstb, addr, data, stb);
     burst_counter = BURST_LENGTH;
   end
     
-  // Process request when we or addr changes
+  // Process request when addstb changes
   always @ (posedge addrstb or negedge addrstb)
   begin
   

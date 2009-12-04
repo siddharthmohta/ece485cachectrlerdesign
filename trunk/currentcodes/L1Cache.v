@@ -4,7 +4,7 @@
   
   Tachchai Buraparatana
   Jinho Park
-  Antonio Romano
+  Anthony Romano
   Hoa Quach
   
            
@@ -67,7 +67,7 @@
      ==========================================================================  
 */
 
-module L1Cache (stall, addrstb, addr, we, data);
+module L1Cache (stall, addrstb, addr, we, data, debug);
 
   // Parameter decleration
   parameter ADDR_WIDTH = 32;
@@ -85,7 +85,7 @@ module L1Cache (stall, addrstb, addr, we, data);
 
   
   // I/O port declarations
-  input stall;
+  input stall, debug;
   
   output addr, addrstb, we;
   
@@ -113,22 +113,20 @@ module L1Cache (stall, addrstb, addr, we, data);
   // Initialize variables
   initial
   begin
+	# 10;
+  
     data_dir = DATA_BUS_READ;
     we = 1;
     addr = 32'd0;
     addrstb = 1;
   end  
 
-/*
-  always @ (stall)
-    while (stall)
-    begin
-    #0.1;
-    end
-*/
-
+  // Begin
   initial
   begin
+  
+  # 10;
+  
     // Open trace file for processing.
     fin = $fopen( TRACE_FILE, "r" );
     
@@ -140,8 +138,9 @@ module L1Cache (stall, addrstb, addr, we, data);
     begin
     
       begin
-        // Display the read-in values to STDOUT.
-        $display( "command:%0d\taddress:%h\t", command, address);
+ if (debug) $display("=================================================================");
+ // Display the read-in values to STDOUT.
+ if(debug) $display( "command:%0d\taddress:%h\t", command, address);
         
         //Decode the command value and make L2 cache request accordingly        
 
@@ -159,7 +158,7 @@ module L1Cache (stall, addrstb, addr, we, data);
           // Wait until stall is de-asserted
           @ (negedge stall)
             // Display the data read from L2
-            $display("Data from L2: %h", data);
+ if (debug) $display("Data from L2: %h", data);
             
         end
 
@@ -167,7 +166,7 @@ module L1Cache (stall, addrstb, addr, we, data);
         begin
         
           write_data = 10;
-          $display("Data from L1: %h", write_data);
+ if (debug) $display("Data from L1: %h", write_data);
           
           data_dir = DATA_BUS_WRITE;     //let write_data regs to drive the bus 
           
@@ -192,12 +191,15 @@ module L1Cache (stall, addrstb, addr, we, data);
       fin_status = $fscanf(fin, "%d %h", command, address);
 
       end
-    
-    end
+
+   end
     
     // Close the file
     $fclose(fin);
     
+    $display("Hit:%0d", L2.cache_hit_counter);
+    $display("Miss:%0d", L2.cache_miss_counter);
+        
     $finish;
   end
 
