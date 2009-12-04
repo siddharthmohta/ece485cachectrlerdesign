@@ -43,7 +43,7 @@ module L2CacheTest(stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM, 
   
   // Cache specific parameters
   parameter CACHE_WORD_SIZE = 32;
-  parameter CACHE_WAY_SIZE = 2;
+  parameter CACHE_WAY_SIZE = 4;
   parameter CACHE_INDEX_SIZE = 2;
   parameter CACHE_LINE_SIZE = BURST_LENGTH * DATA_WIDTH_L2/CACHE_WORD_SIZE;
   //parameter CACHE_LINE_SIZE = BURST_LENGTH * 2 * CACHE_WORD_SIZE;
@@ -257,12 +257,12 @@ module L2CacheTest(stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM, 
 	  
 //testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest
 // Test Code to display all contents
-      for(index = 0; index < CACHE_INDEX_SIZE; index = index + 1)
+      for(line_counter = 0; line_counter < CACHE_INDEX_SIZE; line_counter = line_counter + 1)
       begin
         $display ("    index: %d", index);
-        for(word = 0; word < CACHE_LINE_SIZE; word = word + 1)
+        for(word_counter = 0; word_counter < CACHE_LINE_SIZE; word_counter = word_counter + 1)
         begin
-          $display ("      Word: %d Content: %h", word, cache_data [way][index][word]);
+          $display ("      Word: %d Content: %h", word, cache_data [way_counter][line_counter][word_counter]);
         end
       end
      
@@ -328,20 +328,20 @@ if (debug)
 begin
 
   
-    for (way = 0; way < CACHE_WAY_SIZE; way = way + 1)
+    for (way_counter = 0; way_counter < CACHE_WAY_SIZE; way_counter = way_counter + 1)
     begin
       
-	  $display ("Way: %0d", way);
+	  $display ("Way: %0d", way_counter);
 	  
-      for(index = 0; index < CACHE_INDEX_SIZE; index = index + 1)
+      for(line_counter = 0; line_counter < CACHE_INDEX_SIZE; line_counter = line_counter + 1)
       begin
       
-	    $display ("       Index: %0d", index);
+	    $display ("       Index: %0d", line_counter);
 	  
-        for(word = 0; word < CACHE_LINE_SIZE; word = word + 1)
+        for(word_counter = 0; word_counter < CACHE_LINE_SIZE; word_counter = word_counter + 1)
         begin
         
-          $display ("                Word: %0d: Content: %h", word, cache_data	[way][index][word]);
+          $display ("                Word: %0d: Content: %h", word_counter, cache_data	[way_counter][line_counter][word_counter]);
           //$display ("Way: %0d Index: %0d, Word: %0d Content: %h", way, index, word, cache_data	[way][index][word]);
           
         end
@@ -364,6 +364,7 @@ end
       begin
 
 if(debug) $display("L2 HIT");
+
         cache_hit_counter = cache_hit_counter + 1;
       
         if(cache_dirty[way][addr_index])  //Evict dirty line
@@ -404,19 +405,34 @@ if(debug) $display("L2 HIT");
                                   output _found );
   begin
   
+    way_counter = 0;
     _way = 0;
     _found = FALSE;
     
-    while (_way < CACHE_WAY_SIZE && !_found)
+    while (way_counter < CACHE_WAY_SIZE && !_found)
     begin 
     
-      if (cache_valid[_way][_index] && cache_tag[_way][_index] == _tag)
+      if (cache_valid[way_counter][_index] && cache_tag[way_counter][_index] == _tag)
+      begin
+      
         _found = TRUE;
+        _way = way_counter;
+
+  //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+  //Debug Mode\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\ 
+  if (debug)
+  begin
+       $display ("Task: Look_For_Match"); 
+       $display ("Matching Way: %0d", _way);
+  end
+  //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+      
+      end
         
       else
-        _way = _way + 1;
-        
-    end  
+        way_counter = way_counter + 1;
+
+    end   
     
   end
   
@@ -429,20 +445,26 @@ if(debug) $display("L2 HIT");
   task automatic Look_For_Invalid ( input [CACHE_INDEX_WIDTH-1:0] _index,
                                     output [2:0] _way,
                                     output _found );
-  begin      
-        
-    _way = 0;
+  begin
+  
+    way_counter = 0;
+
     _found = FALSE;
     
-    while (_way < CACHE_WAY_SIZE && _found)
+    while (way_counter < CACHE_WAY_SIZE && !_found)
     begin 
     
-      if (!cache_valid[_way][_index])
+      if (!cache_valid[way_counter][_index])
+      begin
+      
         _found = TRUE;
+        _way = way_counter;
+            
+      end
       else
-        _way = _way + 1;
+        way_counter = way_counter + 1;
         
-    end  
+    end
     
   end
   
@@ -542,6 +564,7 @@ if(debug) $display("L2 HIT");
   
        write_data_L1 = cache_data[_way][_index][_word];
 
+/*
   //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
   //Debug Mode\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\ 
   if (debug)
@@ -549,9 +572,10 @@ if(debug) $display("L2 HIT");
        $display ("L2 outputs"); 
        $display ("Way: %0d, Index: %0d Word %0d", _way, _index, _word);
        $display ("Content: %h", write_data_L1);
+  end     
   //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+*/  
   
-  end
         
   end
   endtask        
@@ -568,6 +592,16 @@ if(debug) $display("L2 HIT");
 
   begin      
             _way = {$random} % CACHE_WAY_SIZE;
+  
+  //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+  //Debug Mode\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\ 
+  if (debug)
+  begin
+       $display ("Task: Replacement_Way_Lookup_Random"); 
+       $display ("Replace Way: %0d", _way);
+  end
+  //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+
   end
   
   endtask
@@ -594,6 +628,15 @@ if(debug) $display("L2 HIT");
       3'b1x1 : _way = 3;
     endcase
     
+  //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+  //Debug Mode\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\ 
+  if (debug)
+  begin
+       $display ("Task: Replacement_Way_Lookup_PLRU"); 
+       $display ("Replace Way: %0d", _way);
+  end
+  //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+    
   end
   endtask
  
@@ -618,6 +661,13 @@ if(debug) $display("L2 HIT");
             cache_plru[_index][0] = 1'b0;
           end
     endcase
+
+  //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+  //Debug Mode\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\
+  if (debug) 
+    $display ("cache_plru[line=%0d]: %b", _index, cache_plru[_index]);
+  //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//    
+    
   end
   endtask
 
@@ -629,38 +679,48 @@ if(debug) $display("L2 HIT");
                                          output [CACHE_WAY_WIDTH-1:0] _way);
   begin 
   
-    way_counter = 0;
+      way_counter = 0;
   
     while (way_counter < CACHE_WAY_SIZE && cache_lru[way_counter][_index])
       way_counter = way_counter + 1;
         
     _way = way_counter;
     
- if (debug) $display ("_way: %d", _way);
+  //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+  //Debug Mode\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\ 
+  if (debug)
+  begin
+       $display ("Task: Replacement_Way_Lookup_LRU"); 
+       $display ("Replace Way: %0d", _way);
+  end
+  //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
   end
   endtask
  
   task automatic Replacement_Update_LRU (input [CACHE_INDEX_WIDTH-1:0] _index,
-                                     input [2:0] _way);
+                                         input [2:0] _way);
   begin
   
       for (way_counter = 0; way_counter < CACHE_WAY_SIZE; way_counter = way_counter + 1)
       begin
-        
+      
         if (cache_lru[way_counter][_index] > cache_lru[_way][_index])
           cache_lru[way_counter][_index] = cache_lru[way_counter][_index] - 1;
         
       end
+      
+   cache_lru[_way][_index] = CACHE_WAY_SIZE-1;
+
 
   //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-  //Debug Mode\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\      
-   if (debug) $display ("cache_lru[_way][_index] %d", cache_lru[_way][_index]);
-         cache_lru[_way][_index] = CACHE_WAY_SIZE-1;
-  //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//      
-
-      
-
+  //Debug Mode\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\
+  if (debug) 
+  begin
+    for (way_counter = 0; way_counter < CACHE_WAY_SIZE; way_counter = way_counter + 1)
+      $display ("cache_lru[way=%0d][line=%0d]: %0d", way_counter, _index, cache_lru[way_counter][_index]);
+  end
+  //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
   end
   endtask
