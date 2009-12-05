@@ -42,9 +42,9 @@ MainMemory MEM(weL2MEM, addrstbL2MEM, addrL2MEM, dataL2MEM, stb);
 initial
 begin
 
-  $monitor("Hit:%0d", L2.cache_hit_counter);
+  //$monitor("Hit:%0d", L2.cache_hit_counter);
   
-  $monitor("Miss:%0d", L2.cache_miss_counter);
+  //$monitor("Miss:%0d", L2.cache_miss_counter);
 
 end
 
