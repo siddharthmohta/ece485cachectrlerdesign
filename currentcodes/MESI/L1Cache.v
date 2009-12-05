@@ -115,7 +115,7 @@ module L1Cache (stall, addrstb, addr, we, snoop, data);
   // Initialize variables
   initial
   begin
-  #5
+  # 10
   
     data_dir = DATA_BUS_READ;
     we = 1;
@@ -134,7 +134,7 @@ module L1Cache (stall, addrstb, addr, we, snoop, data);
 
   initial
   begin
-  #5
+  # 10
   
     // Open trace file for processing.
     fin = $fopen( TRACE_FILE, "r" );
@@ -217,7 +217,7 @@ module L1Cache (stall, addrstb, addr, we, snoop, data);
           
           // Wait until stall is de-asserted and de-assert we
           @ (negedge stall)
-            we = 1; 
+            we = 1;
             
           end  
           

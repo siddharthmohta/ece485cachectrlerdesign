@@ -268,7 +268,7 @@ module L2CacheTest(stb, we_L1, snoop, addrstb_L1, addr_L1, stall, we_MEM, addrst
           INVALID   : ;
           
           EXCLUSIVE : cache_MESI[way][addr_index] = SHARED;
-                       
+                      
           SHARED    : ;
           
           MODIFIED  : begin
@@ -290,7 +290,7 @@ module L2CacheTest(stb, we_L1, snoop, addrstb_L1, addr_L1, stall, we_MEM, addrst
         if(found)
         begin
 
-        $display("Snooped Write");
+          $display("Snooped Write");
     
         case(cache_MESI[way][addr_index])
         
@@ -380,8 +380,9 @@ module L2CacheTest(stb, we_L1, snoop, addrstb_L1, addr_L1, stall, we_MEM, addrst
 
       Cache_Write (way, addr_index, addr_word);
       
-      cache_MESI[way][addr_index] = MODIFIED;
       end
+
+      cache_MESI [way][addr_index] = MODIFIED;
       
     end
     
@@ -400,18 +401,21 @@ module L2CacheTest(stb, we_L1, snoop, addrstb_L1, addr_L1, stall, we_MEM, addrst
       begin
        
  if(debug) $display("L2 MISS");
+ 
         cache_miss_counter = cache_miss_counter + 1;
         
         Look_For_Invalid (addr_index, way, found);
-$display("found: %d", found);        
+        
       if(!found)                       //Evict if empty line not found
-	  begin
-		case (rep)
-		  RANDOM: Replacement_Way_Lookup_Random (addr_index, way);
-		  PLRU  : Replacement_Way_Lookup_PLRU   (addr_index, way);
-		  LRU   : Replacement_Way_Lookup_LRU   (addr_index, way);
-		endcase
-	  end
+  	  begin
+
+  	  	case (rep)
+   		    RANDOM: Replacement_Way_Lookup_Random (addr_index, way);
+  		    PLRU  : Replacement_Way_Lookup_PLRU   (addr_index, way);
+		      LRU   : Replacement_Way_Lookup_LRU   (addr_index, way);
+  		  endcase
+
+	    end
           
         Cache_Line_Fill (addr_tag, addr_index, way);
        
@@ -464,24 +468,18 @@ if(debug) $display("L2 HIT");
 
         cache_hit_counter = cache_hit_counter + 1;
       
-        if(cache_dirty[way][addr_index])  //Evict dirty line
-        begin
-
-           Evict_Line (addr_index, way);  
-           Cache_Line_Fill (addr_tag, addr_index, way);
-          
-        end
-
       Cache_Read (way, addr_index, addr_word);
       
       end
 
     end
-    
+
+ end
+
 	case (rep)
 	  RANDOM: Replacement_Update_Random (addr_index, way);
 	  PLRU  : Replacement_Update_PLRU   (addr_index, way);
-      LRU   : Replacement_Update_LRU    (addr_index, way);
+    LRU   : Replacement_Update_LRU    (addr_index, way);
 	endcase
 
   //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -501,7 +499,6 @@ if(debug) $display("L2 HIT");
  
     #1 stall = 0;          //de-assetrt stall
     
-  end
   
   end
 /******************************************************************************
@@ -594,7 +591,8 @@ if(debug) $display("L2 HIT");
                              input [CACHE_WAY_WIDTH-1:0] _way);
   begin
     
- if (debug) $display("Write Back!");
+// if (debug) $display("Write Back!");
+$display("Write Back!");
   
   end
   
