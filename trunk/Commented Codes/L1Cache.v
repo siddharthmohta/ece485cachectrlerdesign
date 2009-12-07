@@ -8,10 +8,7 @@
   Hoa Quach
   
            
-  Module 
-  
-    L1Cache           
-  
+  Module:      L1Cache             
   
   Purpose
   
@@ -34,7 +31,6 @@
            finish before sending more request.
          A new access cycle can begin when stall is not asserted.
          
-     ==========================================================================
      
      Output
      ==========================================================================
@@ -43,13 +39,11 @@
          Write enable signal that indicates whether the reference is a 
          read or write.
          Should be asserted/de-asserted prior to outputing the address.
-         
-     --------------------------------------------------------------------------
+      -------------------------   
        
        addr [ADDRESS_WIDTH-1:0] - Address bus. 
          Parameter ADDRESS_WIDTH determines the width of the bus.
        
-     ==========================================================================
      
      Inout
      ==========================================================================
@@ -62,9 +56,7 @@
            assign data=(data_dir)?64'bz:write_data;
        
          when data_dir = 1, the bus is driven by other devices.
-              data_dir = 0, the bus id driven by write_data register.
-              
-     ==========================================================================  
+              data_dir = 0, the bus id driven by write_data register.  
 */
 
 module L1Cache (stall, addrstb, addr, we, data, debug);
@@ -153,9 +145,9 @@ module L1Cache (stall, addrstb, addr, we, data, debug);
         if(stall)            //if stall signal is asserted,    
           @ (negedge stall); //wait until de-asserted
         
-/*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+/*%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Cache Read Request
- %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
         else if(command == 0 || command == 2) //process data read and 
         begin                                 //instruction fetch requests.
 
@@ -178,9 +170,9 @@ Cache Read Request
         
         end
         
-/*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+/*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Cache Write Request
- %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
         else if (command == 1)           //process data write requests
         begin
           L2WRITE = L2WRITE + 1;          //increament READ counter
@@ -212,9 +204,9 @@ Cache Write Request
     $fclose(fin);    
     
     
-/*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+/*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Display statistic
- %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/    
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/    
     $display("L2 Read: %0d", L2READ);             //# of Read commands sent to L2
     $display("L2 Write: %0d", L2WRITE);           //# of Write commands sent to L2
     $display("Hit: %0d", L2.cache_hit_counter);   //#of hit

@@ -7,17 +7,12 @@
   Anthony Romano
   Hoa Quach
   
-  
-  Module 
-  
-    MainMemory
-  
+  Module:  MainMemory
   
   Purpose
   
     This moudule provides the D-RAM (main memory controller) stub funtionality 
     in the L2 cache simulation for the replacement policy performance comparison.
-    
     
   Port List
 
@@ -29,12 +24,11 @@
        read or write.
        Should be asserted/de-asserted prior to outputing the address.
        
-   ---------------------------------------------------------------------------
+   ---------------------------------
      
      addr [ADDRESS_WIDTH-1:0] - Address bus
        Parameter ADDRESS_WIDTH determines the width of the bus.
        
-   ===========================================================================
    
    Output
    ==========================================================================
@@ -43,7 +37,6 @@
        Signal being sent along with data bits.
        stb toggles to signal new valid data on data bus
        
-   ==========================================================================
    
    Inout
    ===========================================================================
@@ -56,9 +49,7 @@
          assign data=(data_dir)?64'bz:write_data;
      
        when data_dir = 1, the bus is driven by other devices.
-            data_dir = 0, the bus id driven by write_data register.            
-     
-   ===========================================================================
+            data_dir = 0, the bus id driven by write_data register.           
 */
 
 module MainMemory (we, addrstb, addr, data, stb);
@@ -108,9 +99,9 @@ module MainMemory (we, addrstb, addr, data, stb);
   begin
     #1;    
 
-/*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+/*%%%%%%%%%%%%%%%%%%%%%
     Read Request
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
+%%%%%%%%%%%%%%%%%%%%%%%*/
     if(we)           //output data if we is not asserted.
 
     begin
@@ -130,9 +121,9 @@ module MainMemory (we, addrstb, addr, data, stb);
    end
    
    
-/*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+/*%%%%%%%%%%%%%%%%%%%%%%
     Write Request
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
+%%%%%%%%%%%%%%%%%%%%%%%%*/
    else if(!we)    // we is de-asserted, Do nothing
      begin
 
