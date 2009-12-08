@@ -33,7 +33,7 @@ module L2CacheTest( stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM,
   // Cache specific parameters
   parameter CACHE_WORD_SIZE = 32;  
   parameter CACHE_WAY_SIZE = 4;    // X-Way Set Associative.
-  parameter CACHE_INDEX_SIZE = 64; // # of lines in the cache.
+  parameter CACHE_INDEX_SIZE = 1024; // # of lines in the cache.
   parameter CACHE_LINE_SIZE = BURST_LENGTH * DATA_WIDTH_L2 / CACHE_WORD_SIZE; //Total data the cache can hold.
   
   parameter CACHE_PLRU_WIDTH = 3;  // # of PLRU bits.
@@ -621,8 +621,7 @@ module L2CacheTest( stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM,
             cache_plru[_index][0] = 1'b0;
           end
     endcase
-
-    //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\
+    
     //Debug Mode\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
     if( debug ) 
       $display( "cache_plru[line=%0d]: %b", _index, cache_plru[_index] );

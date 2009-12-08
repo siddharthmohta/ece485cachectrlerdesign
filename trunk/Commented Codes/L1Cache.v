@@ -69,9 +69,10 @@ module L1Cache (stall, addrstb, addr, we, data, debug);
   parameter DATA_BUS_READ  = 1;
   parameter DATA_BUS_WRITE = 0;
   
-  integer L2READ = 0;        //# of Read command sent to L2
-  integer L2WRITE = 0;       //# of Write command sent to L2
-  
+  real L2READ = 0;        //# of Read command sent to L2
+  real L2WRITE = 0;       //# of Write command sent to L2
+  real HITRATIO = 0;
+  real L2HIT = 0;
   
   parameter EOF = -1;       //Multi channel discriptor = -1 when EOF reached
   //parameter NOT_OPEN = 0;
@@ -135,7 +136,6 @@ module L1Cache (stall, addrstb, addr, we, data, debug);
     
       begin
        
-       //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
        //Debug Mode\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\
        if (debug) $display("=================================================");
        if(debug) $display( "command:%0d\taddress:%h\t", command, address);
@@ -163,7 +163,6 @@ Cache Read Request
           @ (negedge stall)
             // Display the data read from L2
         
-        //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
         //Debug Mode\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\
         if (debug) $display("Data from L2: %h", data);
         //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -178,8 +177,7 @@ Cache Write Request
           L2WRITE = L2WRITE + 1;          //increament READ counter
           
           write_data = 10;
-          
-          //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+           
           //Debug Mode\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\        
           if (debug) $display("Data from L1: %h", write_data);
           //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
@@ -199,19 +197,30 @@ Cache Write Request
 
       end
    end
-    
     // Close the file
-    $fclose(fin);    
+    $fclose(fin);
     
+    L2HIT = L2.cache_hit_counter;
+        
+    HITRATIO = L2HIT/(L2READ+L2WRITE)*100.0;
     
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Display statistic
  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/    
-    $display("L2 Read: %0d", L2READ);             //# of Read commands sent to L2
-    $display("L2 Write: %0d", L2WRITE);           //# of Write commands sent to L2
-    $display("Hit: %0d", L2.cache_hit_counter);   //#of hit
-    $display("Miss: %0d", L2.cache_miss_counter); //#of miss
-        
+    $display("+++++++STATISTIC+++++++");
+    $display("L2 Read:......%0d", L2READ);             //# of Read commands sent to L2
+    $display("L2 Write:.....%0d", L2WRITE);            //# of Write commands sent to L2
+    
+    case(L2.rep)
+      0 : $display("Replacement:..RANDOM");
+      1 : $display("Replacement:..PLRU");
+      2 : $display("Replacement:..LRU");
+    endcase
+    
+    $display("Hit:..........%0d", L2.cache_hit_counter);   //#of hit
+    $display("Miss:.........%0d", L2.cache_miss_counter);  //#of miss
+    $display("Hit Ratio:....%5g%", HITRATIO);
+     $display("+++++++++++++++++++++++");    
     $finish;
   end
 
