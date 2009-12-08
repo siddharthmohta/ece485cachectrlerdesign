@@ -13,39 +13,40 @@
 
 module L2CacheTest( stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM, addr_MEM, data_L1, data_MEM, debug, rep );
   
-//                            PARAMETER DECLARATIONS
-//******************************************************************************
+/******************************************************************************
+                              PARAMETER DECLARATIONS
+******************************************************************************/
 
   // General parameters
-  parameter ADDR_WIDTH = 32;       // Address bus size for all modules.
-  parameter DATA_WIDTH_L1 = 32;    // Data bus size between L1 cache and L2 cache.
-  parameter HIGH_Z_L1 = 32'bz;     // High impedance value for bidirectional bus between L1 cache and L2 cache.
+  parameter ADDR_WIDTH = 32;       // Address bus size
+  parameter DATA_WIDTH_L1 = 32;    // Data bus size between L1 and L2
+  parameter HIGH_Z_L1 = 32'bz;     // High impedance value for L1-L2 bidirectional bus
 
   parameter DATA_WIDTH_L2 = 64;    // Data bus size between L2 cache and Main Memory module.
-  parameter HIGH_Z_L2 = 64'bz;     // High impedance value for bidirectional bus between L2 cache and Main Memory.
+  parameter HIGH_Z_L2 = 64'bz;     // High impedance value for L2-Main Memory bidirectional bus
   
-  parameter BURST_LENGTH = 8;      // The burst length of Main Memory.
+  parameter BURST_LENGTH = 2;      // The burst length of Main Memory.
   
-  parameter FALSE = 0;             // Used for setting and checking conditions.
-  parameter TRUE = 1;              // Used for setting and checking conditions.
+  parameter FALSE = 0;             
+  parameter TRUE = 1;              
   
   // Cache specific parameters
-  parameter CACHE_WORD_SIZE = 32;  // Size of a word in the cache.
+  parameter CACHE_WORD_SIZE = 32;  
   parameter CACHE_WAY_SIZE = 4;    // X-Way Set Associative.
-  parameter CACHE_INDEX_SIZE = 64; // Number of lines in the cache.
+  parameter CACHE_INDEX_SIZE = 1; // # of lines in the cache.
   parameter CACHE_LINE_SIZE = BURST_LENGTH * DATA_WIDTH_L2 / CACHE_WORD_SIZE; //Total data the cache can hold.
   
-  parameter CACHE_PLRU_WIDTH = 3;  // Number of PLRU bits.
-  parameter CACHE_LRU_WIDTH = 2;   // Number of LRU bits.
-  parameter CACHE_WAY_WIDTH = 2;   // Defines how many bits should be used for the total number of ways.
-  parameter CACHE_TAG_WIDTH = 20;  // Number of TAG bits.
-  parameter CACHE_INDEX_WIDTH = 32 - CACHE_TAG_WIDTH - CACHE_WORD_WIDTH; // Number of index bits.
-  parameter CACHE_WORD_WIDTH = 4;  // Number of WORD select bits.
- 
+  parameter CACHE_PLRU_WIDTH = 3;  // # of PLRU bits.
+  parameter CACHE_LRU_WIDTH = 2;   // # of LRU bits.
+  parameter CACHE_WAY_WIDTH = 2;   // bits used for the total number of ways.
+  parameter CACHE_TAG_WIDTH = 14;  // # of TAG bits.
+  parameter CACHE_WORD_WIDTH = 4;  // # of WORD select bits.
+  parameter CACHE_INDEX_WIDTH = 32 - CACHE_TAG_WIDTH - CACHE_WORD_WIDTH - 2; // Number of index bits.
+ //32-12-4-2=14
   // Breaks up the address into TAG, INDEX, and WORD select.
-  parameter CACHE_TAG_MSB = ADDR_WIDTH - 1;
-  parameter CACHE_TAG_LSB = CACHE_TAG_MSB - CACHE_TAG_WIDTH + 1;
-  parameter CACHE_INDEX_MSB = CACHE_TAG_LSB - 1;
+  parameter CACHE_TAG_MSB = ADDR_WIDTH - 1;//31
+  parameter CACHE_TAG_LSB = CACHE_TAG_MSB - CACHE_TAG_WIDTH + 1;//31-14+1=18
+  parameter CACHE_INDEX_MSB = CACHE_TAG_LSB - 1; //18 - 1 = 17
   parameter CACHE_INDEX_LSB = CACHE_INDEX_MSB - CACHE_INDEX_WIDTH + 1;
   parameter CACHE_WORD_MSB = CACHE_INDEX_LSB - 1;
   parameter CACHE_WORD_LSB = CACHE_WORD_MSB - CACHE_WORD_WIDTH + 1;
@@ -60,22 +61,21 @@ module L2CacheTest( stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM,
 ******************************************************************************/
 
   // Interface between L1Cache and L2Cache modules.
-  input we_L1;                        // Active-Low write enable. Process a read or write command.
+  input we_L1;                        // Active-Low write enable. Process a read or write.
   input addrstb_L1;                   // Lets L2Cache know when to begin processing a new command.
-  input [ADDR_WIDTH-1:0] addr_L1;     // Address sent in from L1Cache (trace file).
+  input [ADDR_WIDTH-1:0] addr_L1;     // Address sent in from L1Cache.
   
-  output stall;                       // Keep L1Cache from processing until L2Cache finished.
+  output stall;                       // Keep L1Cache from cont. until L2Cache finished.
   
-  inout [DATA_WIDTH_L1-1:0] data_L1;  // Data lines between L1Cache and L2Cache.
+  inout [DATA_WIDTH_L1-1:0] data_L1;  // L1-L2 data bus.
 
-  // Data lines between L1Cache and L2Cache are bidirectional. Assigned based on
-  // we_L1 signal.
+  // Continuous conditional assignment for Bidirectional L!-L2 data bus
   assign data_L1  = ( data_dir_L1 ) ? 64'bz : write_data_L1;
   
   // Interface between L2Cache and MainMemory module.
   input stb;                          // Strobe signal sent with each memory burst. L2Cache uses
                                       // this signal to know when to increment to the next word
-                                      // in the cache line.
+                                      // in cache line.
   output we_MEM;                      // Active-Low write enable. Process a read or write request.
   output [ADDR_WIDTH-1:0] addr_MEM;   // Address sent to MainMemory. (Same as addr_L1)
   output addrstb_MEM;                 // Lets MainMemory know when address and command are valid
@@ -88,7 +88,7 @@ module L2CacheTest( stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM,
   assign data_MEM = ( data_dir_MEM ) ? 64'bz : write_data_MEM;
 
   // Miscellaneous
-  input debug;                        // Turns debugging output statements ON or OFF.
+  input debug;                        // Turns debugging outputs ON/OFF.
   input [1:0] rep;                    // Defines which replacement policy to use.
   
 /******************************************************************************
@@ -104,18 +104,15 @@ module L2CacheTest( stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM,
                                           // or writeback a dirty L2Cache line.
                                           
   // Sets the direction data will flow on the data buses.
-  reg data_dir_L1;                        // Assigns which direction data will be flowing between the
-                                          // L1Cache and L2Cache.
-  reg data_dir_MEM;                       // Assigns which direction data will be flowing between the
-                                          // L2Cache and MainMemory.
+  reg data_dir_L1;                        // controls direction of data
+                                          // between L1Cache and L2Cache.
+  reg data_dir_MEM;                       // controls direction of data
+                                          // between L2Cache and MainMemory.
                                           
   // Variables to hold data.                                        
-  reg [DATA_WIDTH_L1-1:0] write_data_L1;  // Data being written from L2Cache to L1Cache on the
-                                          // data lines between L1Cache and L2Cache.
-  reg [DATA_WIDTH_L2-1:0] write_data_MEM; // Data being written from L2Cache to MainMemory on
-                                          // the data lines between L2Cache and MainMemory.
-  reg [DATA_WIDTH_L2-1:0] data;           // Holds the complete 64-bit data burst from MainMemory and
-                                          // stored in the L2Cache line.
+  reg [DATA_WIDTH_L1-1:0] write_data_L1;  // Data to be written to data line from L2Cache to L1Cache 
+  reg [DATA_WIDTH_L2-1:0] write_data_MEM; // Data to be written to data line from L2Cache to MainMemory.
+  reg [DATA_WIDTH_L2-1:0] data;           // Holds the 64-bit data burst from MainMemory
   
   // Counter and loop control veriables.
   integer burst_counter;
@@ -126,11 +123,11 @@ module L2CacheTest( stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM,
   integer index;                          // Used to initialize all aspects of the L2Cache.
   integer line;                           // Used in debugging to display lines of the cache.
   integer word;                           // Used for initialization and debugging.
-  reg found;                              // Indicates a TRUE or FALSE condition.
+  reg found;                              // Set when a match is found.
 
   // Statistics Counters.
-  integer cache_hit_counter;              // Total HITS into the L2Cache.
-  integer cache_miss_counter;             // Total MISSES into the L2Cache.
+  integer cache_hit_counter;              // Total HITS of the L2Cache.
+  integer cache_miss_counter;             // Total MISSES of the L2Cache.
   
 /******************************************************************************
                     CACHE AND REPLACEMENT STRUCTURES DEFINED
@@ -155,7 +152,7 @@ module L2CacheTest( stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM,
                               INITIALIZATION
 ******************************************************************************/
   
-  // Initialize variables
+  // Initialize vars
   initial
   begin  
     addrstb_MEM = 0;
@@ -203,13 +200,12 @@ module L2CacheTest( stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM,
   always @( negedge addrstb_L1 or posedge addrstb_L1 )
   begin 
     stall = 1; // Stall L1 cache while processing read/write request.
-               // Stop trace file reading.
   
-    data_dir_L1 = ~we_L1; // Write enable command sent from L1Cache determines
+    data_dir_L1 = ~we_L1; // Write enable from L1Cache determines
                           // direction of data flow between L2 and L1.
     
     found = FALSE; // Initialize found flag to FALSE.
-    
+
     // Address Decoding.
     addr_tag = addr_L1[CACHE_TAG_MSB:CACHE_TAG_LSB];
     addr_index = addr_L1[CACHE_INDEX_MSB:CACHE_INDEX_LSB];
@@ -246,7 +242,7 @@ module L2CacheTest( stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM,
           $display( "L2 MISS" );
         //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\
         
-        // Increment the MISS counter by 1.
+        // Increment the MISS counter
         cache_miss_counter = cache_miss_counter + 1;
       
         // Look for an empty L2Cache line.
@@ -254,7 +250,7 @@ module L2CacheTest( stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM,
 
         if( !found ) // Evict a cache line if empty line not found.
 	      begin
-          // Replacement policy is chosen that determines which line to replace.
+          // Choose Replacement policy
 	  	    case( rep )
 	  	      RANDOM : Replacement_Way_Lookup_Random( addr_index, way );
 		          PLRU : Replacement_Way_Lookup_PLRU( addr_index, way );
@@ -281,7 +277,7 @@ module L2CacheTest( stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM,
           $display( "L2 HIT" );
         //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\
 
-        // Increment the HIT counter by 1.
+        // Increment the HIT counter.
         cache_hit_counter = cache_hit_counter + 1;
 
         // The cache line is written to.
@@ -308,7 +304,7 @@ module L2CacheTest( stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM,
           $display( "L2 MISS" );
         //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\
         
-        // Increment the MISS counter by 1. 
+        // Increment the MISS counter. 
         cache_miss_counter = cache_miss_counter + 1;
         
         // Look for an empty L2Cache line.
@@ -324,33 +320,11 @@ module L2CacheTest( stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM,
      		  endcase
   	    end
         
-        // The cache line is filled with new data from memory.  
+        // Fill cache line with new data from memory.  
         Cache_Line_Fill( addr_tag, addr_index, way );
         
         // The cache line word is read.
         Cache_Read( way, addr_index, addr_word ); 
-
-/*
-        // Test code to display all data lines in the cache.
-        if( debug )
-        begin
-          for(  way_counter = 0; way_counter < CACHE_WAY_SIZE; way_counter = way_counter + 1 )
-          begin
-	          $display( "Way: %0d", way_counter );
-	  
-            for( line_counter = 0; line_counter < CACHE_INDEX_SIZE; line_counter = line_counter + 1 )
-            begin
-	            $display( "       Index: %0d", line_counter );
-	  
-              for( word_counter = 0; word_counter < CACHE_LINE_SIZE; word_counter = word_counter + 1 )
-              begin
-                $display( "                Word: %0d: Content: %h", word_counter, cache_data[way_counter][line_counter][word_counter] );
-              //$display( "Way: %0d Index: %0d, Word: %0d Content: %h", way, index, word, cache_data[way][index][word] );
-              end
-            end
-          end
-        end	
-*/
       end
     
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -365,7 +339,7 @@ module L2CacheTest( stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM,
           $display( "L2 HIT" );
         //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\ 
 
-        // Increment HIT counter by 1.
+        // Increment HIT counter
         cache_hit_counter = cache_hit_counter + 1;
       
         // Cache line word read.
@@ -383,8 +357,39 @@ module L2CacheTest( stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM,
          LRU : Replacement_Update_LRU( addr_index, way );
 	  endcase
  
+ 
+//************************************************************** 
+  //Test code to display all lines
+if (debug)
+begin
+
+  
+    for (way = 0; way < CACHE_WAY_SIZE; way = way + 1)
+    begin
+      
+	  $display ("----------------------------------------------");
+	  $display ("Way: %0d", way);
+	  
+      for(index = 0; index < CACHE_INDEX_SIZE; index = index + 1)
+      begin
+      
+	    $display ("       Index: %0d", index);
+	  
+        for(word = 0; word < CACHE_LINE_SIZE; word = word + 1)
+        begin
+        
+          $display ("                Word: %0d: Content: %h", word, cache_data	[way][index][word]);
+         
+        end
+        
+      end
+    end
+	
+end	
+//***************************************************************
+ 
     #1 stall = 0; // De-assetrt stall.
-                  // L1Cache continues processing trace file.
+                  // L1Cache continues processing.
     
   end
   
@@ -414,7 +419,7 @@ module L2CacheTest( stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM,
       // If the cache line is valid and the tags match, then
       if( cache_valid[way_counter][_index] && cache_tag[way_counter][_index] == _tag )
       begin
-        _found = TRUE;      // Set found == true.
+        _found = TRUE;      
         _way = way_counter; // Set the way the line was found in.
 
         //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\
@@ -432,9 +437,9 @@ module L2CacheTest( stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM,
   end
   endtask
 
-/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+/*+++++++++++++++++++++++++++++++++++++
     Task: Check if empty slot present
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+++++++++++++++++++++++++++++++++++++++*/
 
   task automatic Look_For_Invalid( input [CACHE_INDEX_WIDTH-1:0] _index,
                                    output [2:0] _way,
@@ -452,7 +457,7 @@ module L2CacheTest( stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM,
       // If the valid bit is clear, then
       if( !cache_valid[way_counter][_index] )
       begin
-        _found = TRUE;      // Set found == true.
+        _found = TRUE;      
         _way = way_counter; // Set the way the empty line was found in.
       end
       else // Otherwise, move to the next way of the cache.
@@ -461,9 +466,9 @@ module L2CacheTest( stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM,
   end
   endtask
 
-/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+/*+++++++++++++++++++++++++++++++++++++
     Task: Evict_Cache_Line
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
++++++++++++++++++++++++++++++++++++++++*/
 
   task automatic Write_Back( input [CACHE_INDEX_WIDTH-1:0] _index,
                              input [CACHE_WAY_WIDTH-1:0] _way );
@@ -476,9 +481,9 @@ module L2CacheTest( stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM,
   end
   endtask          
 
-/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+/*++++++++++++++++++++++++++++++++++++
     Task: Cache_Line_Fill
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/  
+++++++++++++++++++++++++++++++++++++++*/  
 
   task automatic Cache_Line_Fill( input [CACHE_TAG_WIDTH-1:0] _tag,
                                   input [CACHE_INDEX_WIDTH-1:0] _index,
@@ -489,7 +494,7 @@ module L2CacheTest( stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM,
     if( debug )
     begin
       $display( "Task : Cache_Line_Fill" );
-      $display( "Way: %0d, Tag: %0d, Line: %0d", _way, _tag, _index );
+      $display( "Way: %0d, Tag: %0d, Index: %0d", _way, _tag, _index );
     end
     //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\
 
@@ -497,19 +502,18 @@ module L2CacheTest( stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM,
     we_MEM = 1;          // Set write enable HIGH to let MainMemory know it's 
                          // doing a read.
     addr_MEM = addr_L1;  // Set the MainMemory starting address.
-    word_counter = 0;    // Initialize the word counter. Where each 32-bit word
-                         // of data goes in the cache line.
+    word_counter = 0;    // Initialize the word counter. Where each word
+                         // goes in the cache line.
       
     #1;
       
-    addrstb_MEM = ~addrstb_MEM;  // Signal MainMemory that L2Cache is ready to
-                                 // receive the data.
+    addrstb_MEM = ~addrstb_MEM;  // Signal MainMemory that L2Cache is ready
     
     // Capture however many bursts of data MainMemory is going to give.  
     repeat( BURST_LENGTH )
     begin
       // For each strobe signal MainMemory sends with each 64-bits of data,
-      // capture the data and store two 32-bit words in the cache line.
+      // capture the data and store two words in the cache line.
       @( posedge stb or negedge stb )
       begin
         data = data_MEM;
@@ -517,7 +521,7 @@ module L2CacheTest( stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM,
         cache_data[_way][_index][word_counter+1] = data[63:32];  
       end
       
-      // Increment to the next two 32-bit words to be stored in the cache line.   
+      // Increment to the next two words to be stored in the cache line.   
       word_counter = word_counter + 2;  
     end
       
@@ -527,9 +531,9 @@ module L2CacheTest( stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM,
   end
   endtask
 
-/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+/*++++++++++++++++++++++++++++++++++++++
     Task: Cache Write
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+++++++++++++++++++++++++++++++++++++++++*/
   
   task automatic Cache_Write( input [CACHE_WAY_WIDTH-1:0] _way,
                               input [CACHE_INDEX_WIDTH-1:0] _index,
@@ -549,9 +553,9 @@ module L2CacheTest( stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM,
   end
   endtask
   
-/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+/*+++++++++++++++++++++++++++++++++++++++
     Task: Cache Read
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
++++++++++++++++++++++++++++++++++++++++++*/
   
   task automatic Cache_Read( input [2:0] _way,
                              input [CACHE_INDEX_WIDTH-1:0] _index,
@@ -559,31 +563,19 @@ module L2CacheTest( stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM,
   begin
     // Read the word of data from the cache line. Data put on the L1Cache data
     // lines.
-    write_data_L1 = cache_data[_way][_index][_word];
-/*
-    //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\
-    //Debug Mode\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// 
-    if( debug )
-    begin
-      $display( "L2 outputs" ); 
-      $display( "Way: %0d, Index: %0d Word %0d", _way, _index, _word );
-      $display( "Content: %h", write_data_L1 );
-    end     
-    //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\
-*/    
+    write_data_L1 = cache_data[_way][_index][_word];  
   end
   endtask        
 
-/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+/*+++++++++++++++++++++++++++++++++++++++
     Task: Replacement Policy (Random)
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+++++++++++++++++++++++++++++++++++++++++*/
 
   task automatic Replacement_Way_Lookup_Random( input [CACHE_INDEX_WIDTH-1:0] _index,
                                                 output [CACHE_WAY_WIDTH-1:0] _way );
 
   begin
-    // A random number is generated that determines which way is going to be
-    // replaced.
+    // A random number is generated that determines which way will be replaced.
     _way = {$random} % CACHE_WAY_SIZE;
   
     //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\
@@ -604,74 +596,27 @@ module L2CacheTest( stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM,
   end
   endtask
 
-/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+/*+++++++++++++++++++++++++++++++++++++++++
     Tasks: Replacement Policy (PLRU)
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
++++++++++++++++++++++++++++++++++++++++++++*/
 
   task automatic Replacement_Way_Lookup_PLRU( input [CACHE_INDEX_WIDTH-1:0] _index,
                                               output [CACHE_WAY_WIDTH-1:0] _way );
   begin
-  /*
-         3'bABC
-                         A=0
-                         / \
-                      B=0   C=0
-                      / \   / \
-               WAY = 0   1 2   3
-  */
-    casex( cache_plru[_index] )  
-      3'b00x : _way = 0;
-      3'b01x : _way = 1;
-      3'b1x0 : _way = 2;
-      3'b1x1 : _way = 3;
-    endcase
-    
-    //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\
-    //Debug Mode\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\// 
-    if( debug )
-    begin
-      $display( "Task: Replacement_Way_Lookup_PLRU" ); 
-      $display( "Replace Way: %0d", _way );
-    end
-    //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\
+
   end
   endtask
  
   task automatic Replacement_Update_PLRU( input [CACHE_INDEX_WIDTH-1:0] _index,
                                           input [CACHE_WAY_WIDTH-1:0] _way );
   begin
-    // Whatever way was taken in the tree structure above, each of those bits
-    // is toggled.
-    case( _way )
-      0 : begin
-            cache_plru[_index][2] = 1'b1;
-            cache_plru[_index][1] = 1'b1;
-          end
-      1 : begin  
-            cache_plru[_index][2] = 1'b1;
-            cache_plru[_index][1] = 1'b0;
-          end
-      2 : begin
-            cache_plru[_index][2] = 1'b0;
-            cache_plru[_index][0] = 1'b1;
-          end
-      3 : begin
-            cache_plru[_index][2] = 1'b0;
-            cache_plru[_index][0] = 1'b0;
-          end
-    endcase
 
-    //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\
-    //Debug Mode\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
-    if( debug ) 
-      $display( "cache_plru[line=%0d]: %b", _index, cache_plru[_index] );
-    //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\    
   end
   endtask
 
-/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+/*+++++++++++++++++++++++++++++++++++++++++
     Tasks: Replacement Policy (LRU)
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
++++++++++++++++++++++++++++++++++++++++++++*/
 
   task automatic Replacement_Way_Lookup_LRU( input [CACHE_INDEX_WIDTH-1:0] _index,
                                              output [CACHE_WAY_WIDTH-1:0] _way );

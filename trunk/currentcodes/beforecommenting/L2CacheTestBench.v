@@ -7,7 +7,7 @@
   Hoa Quach
   Tachchai
   
-  Module L2CacheTestBench
+  Module L1CacheTestBench
   
   Port List
   
@@ -30,9 +30,9 @@ wire [31:0] addrL1L2, addrL2MEM;
 wire [31:0] dataL1L2;
 wire [63:0] dataL2MEM;
 
-reg debug = ON;
+reg debug = OFF;
 
-reg [1:0] replacement = RANDOM;
+reg [1:0] replacement = LRU;
 
 L1Cache L1(stall, addrstbL1L2, addrL1L2, weL1L2, dataL1L2, debug);
 L2CacheTest L2(stb, weL1L2, addrstbL1L2, addrL1L2, stall, weL2MEM, addrstbL2MEM, addrL2MEM, dataL1L2, dataL2MEM, debug, replacement);

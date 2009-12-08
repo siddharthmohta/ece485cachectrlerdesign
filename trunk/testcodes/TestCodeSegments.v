@@ -2,6 +2,15 @@
 
 ******************************************************************************/
 
+      for(index_counter = 0; index_counter < CACHE_INDEX_SIZE; index_counter = index_counter + 1)
+      begin
+
+        $display("cache_dirty [%0d] = %0d",index_counter,cache_dirty [index_counter]);
+        $display("cache_valid [%0d] = %0d",index_counter,cache_valid [index_counter]);
+      
+        for(word_counter = 0; word_counter < CACHE_LINE_SIZE; word_counter = word_counter + 1)
+		  $display("cache_data [%0d][%0d] = %h",index_counter,word_counter cache_data[index_counter][word_counter]);
+	  end
   //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
   //Debug Mode\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\
 
@@ -32,35 +41,36 @@ begin
 end	
 //testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest  t
   
-//testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest
-  //Test code to display all lines
-if (debug)
-begin
+	//testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest
+	  //Test code to display all lines
+	if (debug)
+	begin
 
-  
-    for (way = 0; way < CACHE_WAY_SIZE; way = way + 1)
-    begin
-      
-	  $display ("Way: %0d", way);
 	  
-      for(index = 0; index < CACHE_INDEX_SIZE; index = index + 1)
-      begin
-      
-	    $display ("       Index: %0d", index);
-	  
-        for(word = 0; word < CACHE_LINE_SIZE; word = word + 1)
-        begin
-        
-          $display ("                Word: %0d: Content: %h", word, cache_data	[way][index][word]);
-          //$display ("Way: %0d Index: %0d, Word: %0d Content: %h", way, index, word, cache_data	[way][index][word]);
-          
-        end
-        
-      end
-    end
-	
-end	
-//testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest  
+		for (way = 0; way < CACHE_WAY_SIZE; way = way + 1)
+		begin
+		  
+		  $display ("----------------------------------------------");
+		  $display ("Way: %0d", way);
+		  
+		  for(index = 0; index < CACHE_INDEX_SIZE; index = index + 1)
+		  begin
+		  
+			$display ("       Index: %0d", index);
+		  
+			for(word = 0; word < CACHE_LINE_SIZE; word = word + 1)
+			begin
+			
+			  $display ("                Word: %0d: Content: %h", word, cache_data	[way][index][word]);
+			  //$display ("Way: %0d Index: %0d, Word: %0d Content: %h", way, index, word, cache_data	[way][index][word]);
+			  
+			end
+			
+		  end
+		end
+		
+	end	
+	//testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest  
 
 //testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttest
   //Test code to display all lines

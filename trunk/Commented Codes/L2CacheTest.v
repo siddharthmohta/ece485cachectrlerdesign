@@ -25,7 +25,7 @@ module L2CacheTest( stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM,
   parameter DATA_WIDTH_L2 = 64;    // Data bus size between L2 cache and Main Memory module.
   parameter HIGH_Z_L2 = 64'bz;     // High impedance value for L2-Main Memory bidirectional bus
   
-  parameter BURST_LENGTH = 8;      // The burst length of Main Memory.
+  parameter BURST_LENGTH = 4;      // The burst length of Main Memory.
   
   parameter FALSE = 0;             
   parameter TRUE = 1;              
@@ -33,15 +33,15 @@ module L2CacheTest( stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM,
   // Cache specific parameters
   parameter CACHE_WORD_SIZE = 32;  
   parameter CACHE_WAY_SIZE = 4;    // X-Way Set Associative.
-  parameter CACHE_INDEX_SIZE = 1024; // # of lines in the cache.
+  parameter CACHE_INDEX_SIZE = 64; // # of lines in the cache.
   parameter CACHE_LINE_SIZE = BURST_LENGTH * DATA_WIDTH_L2 / CACHE_WORD_SIZE; //Total data the cache can hold.
   
   parameter CACHE_PLRU_WIDTH = 3;  // # of PLRU bits.
   parameter CACHE_LRU_WIDTH = 2;   // # of LRU bits.
   parameter CACHE_WAY_WIDTH = 2;   // bits used for the total number of ways.
-  parameter CACHE_TAG_WIDTH = 20;  // # of TAG bits.
-  parameter CACHE_WORD_WIDTH = 4;  // # of WORD select bits.
-  parameter CACHE_INDEX_WIDTH = 32 - CACHE_TAG_WIDTH - CACHE_WORD_WIDTH; // Number of index bits.
+  parameter CACHE_TAG_WIDTH = 21;  // # of TAG bits.
+  parameter CACHE_WORD_WIDTH = 3;  // # of WORD select bits.
+  parameter CACHE_INDEX_WIDTH = 32 - CACHE_TAG_WIDTH - CACHE_WORD_WIDTH - 2; // Number of index bits.
  
   // Breaks up the address into TAG, INDEX, and WORD select.
   parameter CACHE_TAG_MSB = ADDR_WIDTH - 1;

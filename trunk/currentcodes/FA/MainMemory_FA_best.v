@@ -73,7 +73,7 @@ module MainMemory (we, addrstb, addr, data, stb);
 
   parameter BURST_WIDTH = 64;
   parameter BURST_INCREMENT = 64'd8;
-  parameter BURST_LENGTH = 2;
+  parameter BURST_LENGTH = 32768;
 
   
   // I/O port declarations
