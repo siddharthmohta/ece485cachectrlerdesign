@@ -1,13 +1,17 @@
+/******************************************************************************
+* Assignment:  Cache Controller Design Project
+*
+* Programmers: Jinho Park
+*              Anthony Romano
+*              Hoa Quach
+*              Tachchai Buraparatana
+*              
+* Instructor:  Mark Faust
+* Class:       ECE 485
+* Due Date:    December 8, 2009
+******************************************************************************/
+
 /*
-  ECE 485
-  Cache Controller Design Project
-  
-  Tachchai Buraparatana
-  Jinho Park
-  Anthony Romano
-  Hoa Quach
-  
-           
   Module:      L1Cache             
   
   Purpose
