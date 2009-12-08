@@ -210,8 +210,9 @@ Display statistic
     $display("+++++++STATISTIC+++++++");
     $display("L2 Read:......%0d", L2READ);             //# of Read commands sent to L2
     $display("L2 Write:.....%0d", L2WRITE);            //# of Write commands sent to L2
+    $display("Total.........%0d", L2READ+L2WRITE);     //# of memory references
     
-    case(L2.rep)
+    case(L2.rep)                                       //display the replacement policy used
       0 : $display("Replacement:..RANDOM");
       1 : $display("Replacement:..PLRU");
       2 : $display("Replacement:..LRU");
