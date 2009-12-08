@@ -13,8 +13,9 @@
 
 module L2CacheTest( stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM, addr_MEM, data_L1, data_MEM, debug, rep );
   
-//                            PARAMETER DECLARATIONS
-//******************************************************************************
+/******************************************************************************
+                              PARAMETER DECLARATIONS
+******************************************************************************/
 
   // General parameters
   parameter ADDR_WIDTH = 32;       // Address bus size for all modules.
