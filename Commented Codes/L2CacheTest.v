@@ -39,8 +39,8 @@ module L2CacheTest( stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM,
   parameter CACHE_PLRU_WIDTH = 3;  // # of PLRU bits.
   parameter CACHE_LRU_WIDTH = 2;   // # of LRU bits.
   parameter CACHE_WAY_WIDTH = 2;   // bits used for the total number of ways.
-  parameter CACHE_TAG_WIDTH = 21;  // # of TAG bits.
-  parameter CACHE_WORD_WIDTH = 3;  // # of WORD select bits.
+  parameter CACHE_TAG_WIDTH = 16;  // # of TAG bits.
+  parameter CACHE_WORD_WIDTH = 4;  // # of WORD select bits.
   parameter CACHE_INDEX_WIDTH = 32 - CACHE_TAG_WIDTH - CACHE_WORD_WIDTH - 2; // Number of index bits.
  
   // Breaks up the address into TAG, INDEX, and WORD select.
