@@ -1,13 +1,17 @@
+/******************************************************************************
+* Assignment:  Cache Controller Design Project Extra Credit A
+*
+* Programmers: Jinho Park
+*              Anthony Romano
+*              Hoa Quach
+*              Tachchai Buraparatana
+*              
+* Instructor:  Mark Faust
+* Class:       ECE 485
+* Due Date:    December 8, 2009
+******************************************************************************/
+
 /*
-  ECE 485
-  Cache Controller Design Project
-  
-  Tachchai Buraparatana
-  Jinho Park
-  Anthony Romano
-  Hoa Quach
-  
-           
   Module 
   
     L1Cache           
@@ -33,6 +37,10 @@
          Indicates whether the read/write cycle is over in 
          the memory device that this is requesting data to.
          A new cycle can begin when stall is not asserted.
+
+      --------------------------------------------------------------------------
+       
+       debug - turn on/off debug flags 
          
      ==========================================================================
      
@@ -43,6 +51,9 @@
          Write enable signal that indicates whether the memory reference is a 
          read or write.
          Should be asserted/de-asserted prior to outputing the address.
+     --------------------------------------------------------------------------
+       
+       addrstb - edge-triggered address strobe signal to L2.                  
          
      --------------------------------------------------------------------------
        
@@ -76,11 +87,13 @@ module L1Cache (stall, addrstb, addr, we, data, debug);
 
   parameter DATA_BUS_READ  = 1;
   parameter DATA_BUS_WRITE = 0;
+
+  real L2READ = 0;        //# of Read command sent to L2
+  real L2WRITE = 0;       //# of Write command sent to L2
+  real HITRATIO = 0;
+  real L2HIT = 0;
   
   parameter EOF = -1;       //Multi channel discriptor = -1 when EOF reached
-  //parameter NOT_OPEN = 0;
-  //parameter ON = 1;
-  //parameter OFF = 0;
   parameter TRACE_FILE = "trace.txt";
 
   
@@ -155,6 +168,8 @@ module L1Cache (stall, addrstb, addr, we, data, debug);
         else if(command == 0 || command == 2) //process data read and 
         begin                                 //instruction fetch requests.
 
+          L2READ = L2READ + 1;          //increament READ counter
+          
           data_dir = DATA_BUS_READ;     //set data ports to high impedence
 
           we = 1;                       //de-assert write enable 
@@ -165,16 +180,16 @@ module L1Cache (stall, addrstb, addr, we, data, debug);
           // Wait until stall is de-asserted
           @ (negedge stall);
 
-            // Display the data read from L2
- //if (debug) $display("Data from L2: %h", data);
-            
+           
         end
 
         else if (command == 1)           //process data write requests
         begin
+
+          L2WRITE = L2WRITE + 1;          //increament READ counter
         
           write_data = 10;
- //if (debug) $display("Data from L1: %h", write_data);
+
           
           data_dir = DATA_BUS_WRITE;     //let write_data regs to drive the bus 
           
@@ -205,25 +220,22 @@ module L1Cache (stall, addrstb, addr, we, data, debug);
     // Close the file
     $fclose(fin);
     
-    $display("Total:%0d", L2.total_counter);
-    $display("Hit:%0d", L2.cache_hit_counter);
-    $display("Miss:%0d", L2.cache_miss_counter);
+    L2HIT = L2.cache_hit_counter;
+        
+    HITRATIO = L2HIT/(L2READ+L2WRITE)*100.0;
     
-    cache_total = L2.total_counter;
-    cache_hit = L2.cache_hit_counter;
-    cache_miss = L2.cache_miss_counter;
-    cache_hit_rate = cache_hit/cache_total;
-    cache_miss_rate = cache_miss/cache_total;
+/*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Display statistic
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/    
+    $display("+++++++STATISTIC+++++++");
+    $display("L2 Read:......%0d", L2READ);             //# of Read commands sent to L2
+    $display("L2 Write:.....%0d", L2WRITE);            //# of Write commands sent to L2
+    $display("Total.........%0d", L2READ+L2WRITE);     //# of memory references
     
-    //cache_hit_rate = L2.cache_hit_counter / L2.total_counter;
-    
-    $display("Hit Rate: %0d", cache_hit_rate);
-    
-    cache_miss_rate = L2.cache_miss_counter / L2.total_counter;
-    
-    $display("Miss Rate: %0d", cache_hit_rate);
-     
-    // More statistics 
+    $display("Hit:..........%0d", L2.cache_hit_counter);   //#of hit
+    $display("Miss:.........%0d", L2.cache_miss_counter);  //#of miss
+    $display("Hit Ratio:....%5g%", HITRATIO);
+    $display("+++++++++++++++++++++++");  
         
     $finish;
   end

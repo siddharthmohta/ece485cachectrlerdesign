@@ -1,23 +1,15 @@
-/*
-  ECE 485
-  Cache Controller Design Project
-  
-  Tachchai Buraparatana
-  Jinho Park
-  Anthony Romano
-  Hoa Quach
-  
-           
-  Module 
-  
-    L2CacheTest  
-  
-  Port List
-  
-  Purpose
-  
-    Test module for L2 cache
-*/
+/******************************************************************************
+* Assignment:  Cache Controller Design Project Extra Credit A
+*
+* Programmers: Jinho Park
+*              Anthony Romano
+*              Hoa Quach
+*              Tachchai Buraparatana
+*              
+* Instructor:  Mark Faust
+* Class:       ECE 485
+* Due Date:    December 8, 2009
+******************************************************************************/
 
 module L2CacheTest(stb, we_L1, snoop, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM, addr_MEM, data_L1, data_MEM, debug, rep, inv);
   

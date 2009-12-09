@@ -1,13 +1,17 @@
+/******************************************************************************
+* Assignment:  Cache Controller Design Project Extra Credit A:MESI
+*
+* Programmers: Jinho Park
+*              Anthony Romano
+*              Hoa Quach
+*              Tachchai Buraparatana
+*              
+* Instructor:  Mark Faust
+* Class:       ECE 485
+* Due Date:    December 8, 2009
+******************************************************************************/
+
 /*
-  ECE 485
-  Cache Controller Design Project
-  
-  Tachchai Buraparatana
-  Jinho Park
-  Antonio Romano
-  Hoa Quach
-  
-           
   Module 
   
     L1Cache           
@@ -33,6 +37,11 @@
          Indicates whether the read/write cycle is over in 
          the memory device that this is requesting data to.
          A new cycle can begin when stall is not asserted.
+
+     --------------------------------------------------------------------------
+       
+       snoop[1:0] - signal used to provied snooped FSB bus transaction to L2
+         in this program, snooped signal comes from trace file 
          
      ==========================================================================
      
@@ -43,6 +52,10 @@
          Write enable signal that indicates whether the memory reference is a 
          read or write.
          Should be asserted/de-asserted prior to outputing the address.
+         
+     --------------------------------------------------------------------------
+       
+       addrstb - edge-triggered address strobe signal to L2.                  
          
      --------------------------------------------------------------------------
        
@@ -76,11 +89,13 @@ module L1Cache (stall, addrstb, addr, we, snoop, data);
 
   parameter DATA_BUS_READ  = 1;
   parameter DATA_BUS_WRITE = 0;
+
+  real L2READ = 0;        //# of Read command sent to L2
+  real L2WRITE = 0;       //# of Write command sent to L2
+  real HITRATIO = 0;
+  real L2HIT = 0;
   
   parameter EOF = -1;       //Multi channel discriptor = -1 when EOF reached
-  //parameter NOT_OPEN = 0;
-  //parameter ON = 1;
-  //parameter OFF = 0;
   parameter TRACE_FILE = "trace.txt";
 
   
@@ -124,14 +139,6 @@ module L1Cache (stall, addrstb, addr, we, snoop, data);
     snoop = 2'b00;
   end  
 
-/*
-  always @ (stall)
-    while (stall)
-    begin
-    #0.1;
-    end
-*/
-
   initial
   begin
   # 10
@@ -157,6 +164,8 @@ module L1Cache (stall, addrstb, addr, we, snoop, data);
         else if(command == 0 || command == 2) //process data read and 
         begin                                 //instruction fetch requests.
 
+          L2READ = L2READ + 1;          //increament READ counter
+
           data_dir = DATA_BUS_READ;     //set data ports to high impedence
           we = 1;                       //de-assert write enable 
           addr = address;               //output address
@@ -171,6 +180,8 @@ module L1Cache (stall, addrstb, addr, we, snoop, data);
 
         else if (command == 1)           //process data write requests
         begin
+
+          L2WRITE = L2WRITE + 1;          //increament READ counter
         
           write_data = 10;
           $display("Data from L1: %h", write_data);
@@ -178,12 +189,6 @@ module L1Cache (stall, addrstb, addr, we, snoop, data);
           data_dir = DATA_BUS_WRITE;     //let write_data regs to drive the bus 
           
           we = 0;                        //assert write enable
-          
-          //construct output value by concatinating
-          //lower 16 bits of the addr value and 0xAAAA
-
-          //write_data[31:16] = addr[15:0];
-          //write_data[15:0]  = 16'haaaa;
           
           addr = address;                //output address
           addrstb = ~addrstb;
@@ -229,11 +234,28 @@ module L1Cache (stall, addrstb, addr, we, snoop, data);
  $display("=================================================================");
 
       end
-
-    
     
     // Close the file
     $fclose(fin);
+    
+    L2HIT = L2.cache_hit_counter;
+        
+    HITRATIO = L2HIT/(L2READ+L2WRITE)*100.0;
+    
+/*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Display statistic
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/    
+    $display("+++++++STATISTIC+++++++");
+    $display("L2 Read:......%0d", L2READ);             //# of Read commands sent to L2
+    $display("L2 Write:.....%0d", L2WRITE);            //# of Write commands sent to L2
+    $display("Total.........%0d", L2READ+L2WRITE);     //# of memory references
+    
+    $display("Hit:..........%0d", L2.cache_hit_counter);   //#of hit
+    $display("Miss:.........%0d", L2.cache_miss_counter);  //#of miss
+    $display("Hit Ratio:....%5g%", HITRATIO);
+    $display("+++++++++++++++++++++++");  
+        
+    $finish;
     
     $finish;
   end
