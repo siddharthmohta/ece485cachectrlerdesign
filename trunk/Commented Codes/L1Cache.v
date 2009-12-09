@@ -79,9 +79,6 @@ module L1Cache (stall, addrstb, addr, we, data, debug);
   real L2HIT = 0;
   
   parameter EOF = -1;       //Multi channel discriptor = -1 when EOF reached
-  //parameter NOT_OPEN = 0;
-  //parameter ON = 1;
-  //parameter OFF = 0;
   parameter TRACE_FILE = "trace.txt";
 
   
@@ -225,7 +222,8 @@ Display statistic
     $display("Hit:..........%0d", L2.cache_hit_counter);   //#of hit
     $display("Miss:.........%0d", L2.cache_miss_counter);  //#of miss
     $display("Hit Ratio:....%5g%", HITRATIO);
-     $display("+++++++++++++++++++++++");    
+    $display("+++++++++++++++++++++++");    
+    
     $finish;
   end
 
