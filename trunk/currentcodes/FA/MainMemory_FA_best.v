@@ -1,13 +1,17 @@
+/******************************************************************************
+* Assignment:  Cache Controller Design Project Extra Credit B
+*
+* Programmers: Jinho Park
+*              Anthony Romano
+*              Hoa Quach
+*              Tachchai Buraparatana
+*              
+* Instructor:  Mark Faust
+* Class:       ECE 485
+* Due Date:    December 8, 2009
+******************************************************************************/
+
 /*
-  ECE 485
-  Cache Controller Design Project
-  
-  Tachchai Buraparatana
-  Jinho Park
-  Anthony Romano
-  Hoa Quach
-  
-  
   Module 
   
     MainMemory
@@ -39,7 +43,7 @@
    
    Output
 
-     N/A
+     stb - data strobe signal to L2 cache
 
    
    Inout
@@ -55,11 +59,6 @@
        when data_dir = 1, the bus is driven by other devices.
             data_dir = 0, the bus id driven by write_data register.
 
-   ---------------------------------------------------------------------------
-            
-     stb - Data strobe signal
-       Signal being sent along with data bits.
-            
    ===========================================================================
 
 */

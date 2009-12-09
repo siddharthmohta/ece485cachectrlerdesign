@@ -1,23 +1,15 @@
-/*
-  ECE 485
-  Cache Controller Design Project
-  
-  Tachchai Buraparatana
-  Jinho Park
-  Anthony Romano
-  Hoa Quach
-  
-           
-  Module 
-  
-    L2CacheTest  
-  
-  Port List
-  
-  Purpose
-  
-    Test module for L2 cache
-*/
+/******************************************************************************
+* Assignment:  Cache Controller Design Project Extra Credit B
+*
+* Programmers: Jinho Park
+*              Anthony Romano
+*              Hoa Quach
+*              Tachchai Buraparatana
+*              
+* Instructor:  Mark Faust
+* Class:       ECE 485
+* Due Date:    December 8, 2009
+******************************************************************************/
  
 module L2CacheTest(stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM, addr_MEM, data_L1, data_MEM);
   
@@ -383,8 +375,6 @@ module L2CacheTest(stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM, 
         index_counter = index_counter + 1;
         
     end  
-
-      //$display("Index: %d", _index);
     
   end
   
@@ -488,9 +478,6 @@ module L2CacheTest(stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM, 
         cache_data[_index][_word] = data_L1;
         cache_dirty[_index] = TRUE;
         
-        //$display("L1 Write");
-        //$display("Data from L1: %h", data_L1);
-        
   end
   endtask
   
@@ -504,11 +491,6 @@ module L2CacheTest(stb, we_L1, addrstb_L1, addr_L1, stall, we_MEM, addrstb_MEM, 
   
        write_data_L1 = cache_data[_index][_word];
  
-       //$display("L1 Read");
-       //$display ("L2 write data: %h", write_data_L1);
-       
-       //$display("Tag: %0d Index: %0d Word %0d", addr_tag, addr_index, addr_word);
-        
   end
   endtask        
 
